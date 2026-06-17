@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>NNS 護理系統 v2 — HEPS/DURA</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh;color:#1a202c}
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:230px;background:#1a365d;color:#fff;display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-logo{padding:18px 16px 12px;border-bottom:1px solid #2d4a7a}
+.sidebar-logo h2{font-size:14px;font-weight:700;color:#63b3ed}
+.sidebar-logo p{font-size:10px;color:#90cdf4;margin-top:2px}
+.sidebar-section{padding:8px 16px 4px;font-size:10px;color:#4a6fa5;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:4px}
+.sidebar-nav{flex:1;padding:4px 0;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;font-size:12.5px;color:#bee3f8;transition:background .15s;border-left:3px solid transparent}
+.nav-item:hover{background:#2d4a7a;color:#fff}
+.nav-item.active{background:#2a4365;color:#fff;border-left-color:#63b3ed}
+.nav-icon{font-size:15px;width:18px;text-align:center}
+.sidebar-footer{padding:12px 16px;border-top:1px solid #2d4a7a;font-size:11px;color:#90cdf4}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:#fff;border-bottom:1px solid #e2e8f0;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.topbar-title{font-size:15px;font-weight:600;color:#2d3748}
+.topbar-right{font-size:12px;color:#718096;display:flex;align-items:center;gap:10px}
+.badge{padding:2px 8px;border-radius:9px;font-size:11px;font-weight:600}
+.badge-blue{background:#ebf8ff;color:#2b6cb0}
+.badge-green{background:#f0fff4;color:#276749}
+.badge-red{background:#fff5f5;color:#c53030}
+.badge-yellow{background:#fffff0;color:#744210}
+.badge-purple{background:#faf5ff;color:#6b46c1}
+.content{flex:1;overflow-y:auto;padding:24px}
+.page{animation:fadeIn .18s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+/* login */
+.login-wrap{min-height:100vh;background:#1a365d;display:flex;align-items:center;justify-content:center}
+.login-card{background:#fff;border-radius:12px;padding:40px 36px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-card h1{font-size:22px;font-weight:700;color:#1a365d;margin-bottom:4px}
+.login-card .sub{font-size:13px;color:#718096;margin-bottom:28px}
+
+/* forms */
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:11px;font-weight:700;color:#4a5568;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+.fg input,.fg select,.fg textarea{width:100%;padding:8px 11px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:13px;color:#2d3748;outline:none;transition:border .15s;font-family:inherit}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:#4299e1}
+.fg textarea{resize:vertical;min-height:72px}
+
+/* buttons */
+.btn{padding:8px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:#2b6cb0;color:#fff}.btn-primary:hover{background:#2c5282}
+.btn-primary:disabled{background:#a0aec0;cursor:not-allowed}
+.btn-secondary{background:#edf2f7;color:#4a5568}.btn-secondary:hover{background:#e2e8f0}
+.btn-success{background:#276749;color:#fff}.btn-success:hover{background:#22543d}
+.btn-danger{background:#fff5f5;color:#c53030;border:1.5px solid #fed7d7}.btn-danger:hover{background:#fed7d7}
+.btn-purple{background:#6b46c1;color:#fff}.btn-purple:hover{background:#553c9a}
+.btn-sm{padding:4px 11px;font-size:12px}
+.btn-full{width:100%;justify-content:center;padding:11px}
+
+/* cards */
+.card{background:#fff;border-radius:10px;border:1px solid #e2e8f0;margin-bottom:16px}
+.card-header{padding:13px 18px;border-bottom:1px solid #edf2f7;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.card-header h3{font-size:14px;font-weight:600;color:#2d3748}
+.card-body{padding:18px}
+
+/* stats */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.stat{background:#f7fafc;border-radius:8px;padding:13px;border:1px solid #e2e8f0;text-align:center}
+.stat-num{font-size:26px;font-weight:700;color:#2b6cb0}
+.stat-label{font-size:10px;color:#718096;margin-top:2px}
+
+/* table */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{background:#f7fafc;padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e2e8f0}
+.tbl td{padding:9px 12px;border-bottom:1px solid #f0f4f8;color:#4a5568;vertical-align:middle}
+.tbl tr:hover td{background:#f7fafc}
+.tbl tr:last-child td{border-bottom:none}
+
+/* dura */
+.dura-item{display:grid;grid-template-columns:1fr 230px;gap:16px;align-items:start;padding:13px 0;border-bottom:1px solid #f0f4f8}
+.dura-item:last-child{border-bottom:none}
+.dura-label{font-size:13px;font-weight:600;color:#2d3748}
+.dura-desc{font-size:11px;color:#718096;margin-top:3px}
+.dura-opts{display:flex;flex-direction:column;gap:5px}
+.dura-opt{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#4a5568;padding:5px 8px;border-radius:6px;border:1.5px solid #e2e8f0;transition:all .12s}
+.dura-opt:hover{border-color:#90cdf4;background:#ebf8ff}
+.dura-opt.selected{border-color:#3182ce;background:#ebf8ff;color:#2b6cb0;font-weight:600}
+.score-box{background:#1a365d;color:#fff;border-radius:10px;padding:20px;text-align:center;margin-top:16px}
+.score-num{font-size:48px;font-weight:700}
+.risk-badge{display:inline-block;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:700;margin-top:8px}
+.risk-low{background:#c6f6d5;color:#276749}
+.risk-med{background:#fefcbf;color:#744210}
+.risk-high{background:#fed7d7;color:#9b2c2c}
+
+/* search */
+.search-bar{display:flex;gap:8px;margin-bottom:14px}
+.search-bar input{flex:1;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:13px;outline:none}
+.search-bar input:focus{border-color:#4299e1}
+
+/* robot card */
+.robot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.robot-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px}
+.robot-card .r-icon{font-size:28px;margin-bottom:8px}
+.robot-card .r-id{font-size:11px;color:#a0aec0;margin-bottom:4px}
+.robot-card .r-name{font-size:13px;font-weight:700;color:#2d3748;margin-bottom:6px}
+.robot-card .r-task{font-size:12px;color:#718096}
+.robot-card .r-status{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;margin-top:8px}
+.status-active{background:#c6f6d5;color:#276749}
+.status-idle{background:#edf2f7;color:#718096}
+.status-busy{background:#fefcbf;color:#744210}
+
+/* chat */
+.chat-wrap{border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;margin-bottom:12px}
+.chat-msgs{height:220px;overflow-y:auto;padding:14px;background:#f7fafc;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:75%;padding:8px 12px;border-radius:10px;font-size:13px;line-height:1.5}
+.msg-nurse{background:#2b6cb0;color:#fff;align-self:flex-end;border-bottom-right-radius:3px}
+.msg-patient{background:#fff;border:1px solid #e2e8f0;color:#2d3748;align-self:flex-start;border-bottom-left-radius:3px}
+.msg-system{background:#e9d8fd;color:#553c9a;align-self:center;font-size:11px;padding:4px 10px}
+.chat-input{display:flex;border-top:1px solid #e2e8f0}
+.chat-input input{flex:1;padding:10px 14px;border:none;font-size:13px;outline:none;font-family:inherit}
+.chat-input button{padding:10px 16px;background:#2b6cb0;color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:600}
+
+/* asr log */
+.asr-log{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;max-height:200px;overflow-y:auto;font-size:12px;color:#4a5568;line-height:1.8}
+.asr-entry{padding:3px 0;border-bottom:1px solid #edf2f7}
+.asr-entry:last-child{border-bottom:none}
+.asr-time{color:#a0aec0;margin-right:8px;font-size:11px}
+
+/* anns */
+.anns-output{background:#f0fff4;border:1px solid #9ae6b4;border-radius:8px;padding:14px;font-size:13px;line-height:1.8;color:#276749;white-space:pre-wrap;min-height:80px}
+.anns-loading{color:#a0aec0;font-style:italic}
+
+/* amd */
+.amd-track{display:flex;align-items:center;gap:0;margin:12px 0}
+.amd-step{flex:1;text-align:center;font-size:11px;color:#a0aec0}
+.amd-step.done{color:#276749;font-weight:600}
+.amd-step.active{color:#2b6cb0;font-weight:700}
+.amd-dot{width:28px;height:28px;border-radius:50%;border:2px solid #e2e8f0;background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;margin:0 auto 4px}
+.amd-dot.done{border-color:#276749;background:#f0fff4}
+.amd-dot.active{border-color:#2b6cb0;background:#ebf8ff;animation:pulse 1s infinite}
+.amd-line{flex:0 0 30px;height:2px;background:#e2e8f0;margin-bottom:20px}
+.amd-line.done{background:#276749}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(43,108,176,.3)}50%{box-shadow:0 0 0 6px rgba(43,108,176,0)}}
+
+/* toast */
+.toast{position:fixed;bottom:24px;right:24px;background:#2d3748;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:999;animation:slideUp .25s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* act */
+.act-langs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.act-lang-btn{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #e2e8f0;background:#fff;color:#4a5568;transition:all .15s}
+.act-lang-btn.active{border-color:#2b6cb0;background:#ebf8ff;color:#2b6cb0}
+.act-result{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;font-size:14px;color:#2d3748;min-height:60px;line-height:1.8}
+
+@media print{.sidebar,.topbar,.no-print{display:none!important}.content{padding:0}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef} = React;
+
+const PATIENTS=[
+  {id:'P001',name:'王小明',ward:'內科',bed:'101A',age:72,gender:'男',diagnosis:'糖尿病、高血壓'},
+  {id:'P002',name:'李美華',ward:'外科',bed:'203B',age:65,gender:'女',diagnosis:'膽囊炎術後'},
+  {id:'P003',name:'陳大同',ward:'骨科',bed:'312C',age:80,gender:'男',diagnosis:'髖關節置換術後'},
+  {id:'P004',name:'張雅芳',ward:'神經',bed:'405A',age:58,gender:'女',diagnosis:'腦中風復健'},
+  {id:'P005',name:'林志遠',ward:'內科',bed:'108B',age:76,gender:'男',diagnosis:'慢性腎衰竭'},
+];
+
+const DURA_ITEMS=[
+  {id:'D1',label:'感官知覺',desc:'對壓力引起的不適感反應能力',
+   options:[{text:'完全喪失',score:1},{text:'嚴重受損',score:2},{text:'輕微受損',score:3},{text:'未受損',score:4}]},
+  {id:'D2',label:'潮濕程度',desc:'皮膚暴露於潮濕的程度',
+   options:[{text:'持續潮濕',score:1},{text:'非常潮濕',score:2},{text:'偶爾潮濕',score:3},{text:'很少潮濕',score:4}]},
+  {id:'D3',label:'活動能力',desc:'身體活動程度',
+   options:[{text:'臥床不起',score:1},{text:'侷限椅上',score:2},{text:'偶爾步行',score:3},{text:'經常步行',score:4}]},
+  {id:'D4',label:'移動能力',desc:'改變和控制身體姿勢的能力',
+   options:[{text:'完全不能移動',score:1},{text:'嚴重受限',score:2},{text:'輕微受限',score:3},{text:'未受限',score:4}]},
+  {id:'D5',label:'營養狀況',desc:'一般飲食攝取型態',
+   options:[{text:'非常差',score:1},{text:'可能不足',score:2},{text:'足夠',score:3},{text:'非常好',score:4}]},
+  {id:'D6',label:'摩擦力與剪力',desc:'移動時皮膚摩擦的程度',
+   options:[{text:'有問題',score:1},{text:'潛在問題',score:2},{text:'無明顯問題',score:3}]},
+];
+
+const ROBOTS=[
+  {id:'R001',name:'NurseBot Alpha',icon:'🤖',task:'協助王小明換藥，病房101A',status:'active'},
+  {id:'R002',name:'NurseBot Beta',icon:'🦾',task:'待命中',status:'idle'},
+  {id:'R003',name:'NurseBot Gamma',icon:'🤖',task:'藥物配送至203B',status:'busy'},
+];
+
+const MEDS=[
+  {id:'M001',name:'Metformin 500mg',patient:'王小明',qty:2,status:0},
+  {id:'M002',name:'Warfarin 5mg',patient:'張雅芳',qty:1,status:2},
+  {id:'M003',name:'Furosemide 40mg',patient:'林志遠',qty:1,status:4},
+];
+
+const AMD_STEPS=['收到處方','備藥確認','機器人取藥','配送中','完成配送'];
+
+const ACT_DICT={
+  '你好':       {en:'Hello',hakka:'Ngì hó',taiwanese:'Li-hó'},
+  '請問您有哪裡不舒服？':{en:'Where does it hurt?',hakka:'Ngiá mak-ke m̀-sṳ́-fuk?',taiwanese:'Lí tó-uī bē-sū-hok?'},
+  '我需要幫助': {en:'I need help',hakka:'Ngài yeu pong-chhu',taiwanese:'Guá iàu pang-bâng'},
+  '今天感覺如何？':{en:'How are you feeling today?',hakka:'Kin-ngit gám-kok ngióng-yong?',taiwanese:'Kin-á-ji̍t kám-kak án-tsuánn?'},
+  '請深呼吸':  {en:'Please take a deep breath',hakka:'Chhiáng chhim fî-sit',taiwanese:'Chhiánn chhim-khip-khùi'},
+};
+
+const getRisk=score=>{
+  if(score<=12)return{label:'高危險',cls:'risk-high',badge:'badge-red'};
+  if(score<=15)return{label:'中危險',cls:'risk-med',badge:'badge-yellow'};
+  return{label:'低危險',cls:'risk-low',badge:'badge-green'};
+};
+
+function Toast({msg,onDone}){
+  useEffect(()=>{const t=setTimeout(onDone,2400);return()=>clearTimeout(t)},[]);
+  return <div className="toast">{msg}</div>;
+}
+
+// ── Login ──
+function Login({onLogin}){
+  const [u,setU]=useState('');const [pw,setPw]=useState('');const [err,setErr]=useState('');
+  const go=()=>{if(u==='nurse'&&pw==='1234')onLogin({name:'王護士',id:'N001',ward:'內科'});else setErr('帳號或密碼錯誤');};
+  return(
+    <div className="login-wrap">
+      <div className="login-card">
+        <h1>NNS 護理系統</h1>
+        <p className="sub">HEPS / DURA 壓瘡危險性評估系統　請登入</p>
+        <div className="fg"><label>員工編號</label><input value={u} onChange={e=>setU(e.target.value)} placeholder="nurse" onKeyDown={e=>e.key==='Enter'&&go()}/></div>
+        <div className="fg"><label>密碼</label><input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="1234" onKeyDown={e=>e.key==='Enter'&&go()}/></div>
+        {err&&<p style={{color:'#c53030',fontSize:12,marginBottom:10}}>{err}</p>}
+        <button className="btn btn-primary btn-full" onClick={go}>登入系統</button>
+        <p style={{fontSize:11,color:'#a0aec0',marginTop:10,textAlign:'center'}}>測試帳號：nurse / 1234</p>
+      </div>
+    </div>
+  );
+}
+
+// ── Dashboard ──
+function Dashboard({history,asrLogs}){
+  const high=history.filter(h=>getRisk(h.score).label==='高危險').length;
+  return(
+    <div className="page">
+      <div className="stat-row">
+        <div className="stat"><div className="stat-num">{history.length}</div><div className="stat-label">評估次數</div></div>
+        <div className="stat"><div className="stat-num" style={{color:'#c53030'}}>{high}</div><div className="stat-label">高危險</div></div>
+        <div className="stat"><div className="stat-num" style={{color:'#276749'}}>{PATIENTS.length}</div><div className="stat-label">病人數</div></div>
+        <div className="stat"><div className="stat-num" style={{color:'#6b46c1'}}>{asrLogs.length}</div><div className="stat-label">ASR紀錄</div></div>
+      </div>
+      <div className="card">
+        <div className="card-header"><h3>📋 最近評估</h3></div>
+        <div className="card-body" style={{padding:0}}>
+          {history.length===0?<p style={{padding:16,color:'#a0aec0',fontSize:13}}>尚無評估紀錄</p>:
+          <table className="tbl"><thead><tr><th>病人</th><th>分數</th><th>風險</th><th>時間</th></tr></thead>
+          <tbody>{[...history].reverse().slice(0,5).map((h,i)=>{const r=getRisk(h.score);return(
+            <tr key={i}><td style={{fontWeight:600}}>{h.patientName}</td>
+            <td style={{fontWeight:700,color:'#2b6cb0'}}>{h.score}</td>
+            <td><span className={`badge ${r.badge}`}>{r.label}</span></td>
+            <td style={{color:'#a0aec0',fontSize:12}}>{h.time}</td></tr>
+          );})}</tbody></table>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Patient List ──
+function PatientList({onSelect}){
+  const [q,setQ]=useState('');
+  const f=PATIENTS.filter(p=>p.name.includes(q)||p.ward.includes(q)||p.id.includes(q));
+  return(
+    <div className="page">
+      <div className="search-bar"><input value={q} onChange={e=>setQ(e.target.value)} placeholder="搜尋病人姓名、病房、編號…"/></div>
+      <div className="card"><div className="card-body" style={{padding:0}}>
+        <table className="tbl"><thead><tr><th>編號</th><th>姓名</th><th>病房</th><th>床號</th><th>年齡</th><th>診斷</th><th>操作</th></tr></thead>
+        <tbody>{f.map(p=>(
+          <tr key={p.id}>
+            <td><span className="badge badge-blue">{p.id}</span></td>
+            <td style={{fontWeight:600}}>{p.name}</td><td>{p.ward}</td><td>{p.bed}</td><td>{p.age}</td>
+            <td style={{fontSize:12,color:'#718096'}}>{p.diagnosis}</td>
+            <td><button className="btn btn-primary btn-sm" onClick={()=>onSelect(p)}>開始評估</button></td>
+          </tr>
+        ))}</tbody></table>
+      </div></div>
+    </div>
+  );
+}
+
+// ── DURA Form ──
+function DURAForm({patient,onSave,onCancel,onAddASR}){
+  const [ans,setAns]=useState({});const [saved,setSaved]=useState(false);
+  const [dt,setDt]=useState(()=>new Date().toISOString().slice(0,16));
+  const score=Object.values(ans).reduce((a,b)=>a+b,0);
+  const filled=Object.keys(ans).length===DURA_ITEMS.length;
+  const risk=filled?getRisk(score):null;
+
+  const save=()=>{
+    if(!filled)return;
+    onSave({patientId:patient.id,patientName:patient.name,ward:patient.ward,score,ans,time:dt.replace('T',' ')});
+    onAddASR(`護士完成 ${patient.name} 的 DURA 評估，得分 ${score}，風險：${getRisk(score).label}`);
+    setSaved(true);
+  };
+
+  const print=()=>{
+    const r=getRisk(score);
+    const w=window.open('','_blank','width=800,height:900');
+    w.document.write(`<html><head><title>DURA評估表</title>
+    <style>body{font-family:Arial,sans-serif;padding:32px}h2{color:#1a365d}
+    table{width:100%;border-collapse:collapse;margin-top:20px;font-size:13px}
+    th{background:#ebf8ff;padding:8px 12px;border:1px solid #bee3f8;text-align:left}
+    td{padding:8px 12px;border:1px solid #e2e8f0}
+    .s{font-size:32px;font-weight:700;color:#2b6cb0}
+    .rh{background:#fed7d7;color:#9b2c2c;padding:4px 12px;border-radius:20px;display:inline-block;font-weight:700}
+    .rm{background:#fefcbf;color:#744210;padding:4px 12px;border-radius:20px;display:inline-block;font-weight:700}
+    .rl{background:#c6f6d5;color:#276749;padding:4px 12px;border-radius:20px;display:inline-block;font-weight:700}
+    </style></head><body>
+    <h2>壓瘡危險性評估表 (DURA)</h2>
+    <p>病人：${patient.name}（${patient.id}）　病房：${patient.ward} ${patient.bed}　評估時間：${dt.replace('T',' ')}</p>
+    <table><thead><tr><th>評估項目</th><th>選項</th><th>分數</th></tr></thead><tbody>
+    ${DURA_ITEMS.map(item=>{const o=item.options.find(x=>x.score===ans[item.id]);
+      return`<tr><td>${item.label}</td><td>${o?o.text:'—'}</td><td>${o?o.score:'—'}</td></tr>`;}).join('')}
+    </tbody></table>
+    <div style="margin-top:20px"><div class="s">${score} 分</div>
+    <div class="${r.cls==='risk-high'?'rh':r.cls==='risk-med'?'rm':'rl'}" style="margin-top:8px">${r.label}</div></div>
+    <p style="margin-top:32px;font-size:11px;color:#a0aec0">評估護士：王護士（N001）　${new Date().toLocaleString('zh-TW')}</p>
+    </body></html>`);
+    w.document.close();w.print();
+  };
+
+  return(
+    <div className="page">
+      <div className="card">
+        <div className="card-header">
+          <h3>DURA 評估 — {patient.name}（{patient.ward} {patient.bed}）</h3>
+          <button className="btn btn-secondary btn-sm no-print" onClick={onCancel}>← 返回</button>
+        </div>
+        <div className="card-body">
+          <div className="fg" style={{maxWidth:260,marginBottom:20}}>
+            <label>評估日期時間</label>
+            <input type="datetime-local" value={dt} onChange={e=>setDt(e.target.value)}/>
+          </div>
+          {DURA_ITEMS.map(item=>(
+            <div className="dura-item" key={item.id}>
+              <div><div className="dura-label">{item.label}</div>
+                {item.desc&&<div className="dura-desc">{item.desc}</div>}</div>
+              <div className="dura-opts">{item.options.map(opt=>(
+                <div key={opt.score}
+                  className={`dura-opt${ans[item.id]===opt.score?' selected':''}`}
+                  onClick={()=>setAns(a=>({...a,[item.id]:opt.score}))}>
+                  <span>{opt.text}</span>
+                  <span style={{marginLeft:'auto',fontWeight:700,opacity:.7}}>{opt.score}分</span>
+                </div>
+              ))}</div>
+            </div>
+          ))}
+          {filled&&<div className="score-box">
+            <div className="score-num">{score}</div>
+            <div style={{fontSize:13,opacity:.8,marginTop:4}}>DURA 總分</div>
+            <span className={`risk-badge ${risk.cls}`}>{risk.label}</span>
+          </div>}
+          <div style={{display:'flex',gap:10,marginTop:18}} className="no-print">
+            {!saved
+              ?<button className="btn btn-success" onClick={save} disabled={!filled}>💾 儲存結果</button>
+              :<span style={{color:'#276749',fontSize:13,fontWeight:600}}>✓ 已儲存</span>}
+            {filled&&<button className="btn btn-secondary" onClick={print}>🖨️ 列印表單</button>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── History ──
+function History({history}){
+  const [q,setQ]=useState('');
+  const f=history.filter(h=>h.patientName.includes(q)||h.ward.includes(q));
+  return(
+    <div className="page">
+      <div className="search-bar"><input value={q} onChange={e=>setQ(e.target.value)} placeholder="搜尋病人或病房…"/></div>
+      <div className="card"><div className="card-body" style={{padding:0}}>
+        {f.length===0?<p style={{padding:16,color:'#a0aec0',fontSize:13}}>尚無評估紀錄</p>:
+        <table className="tbl"><thead><tr><th>病人</th><th>病房</th><th>分數</th><th>風險</th><th>時間</th></tr></thead>
+        <tbody>{[...f].reverse().map((h,i)=>{const r=getRisk(h.score);return(
+          <tr key={i}><td style={{fontWeight:600}}>{h.patientName}</td><td>{h.ward}</td>
+          <td style={{fontWeight:700,fontSize:16,color:'#2b6cb0'}}>{h.score}</td>
+          <td><span className={`badge ${r.badge}`}>{r.label}</span></td>
+          <td style={{color:'#718096',fontSize:12}}>{h.time}</td></tr>
+        );})}</tbody></table>}
+      </div></div>
+    </div>
+  );
+}
+
+// ── DT: Digital Twins ──
+function DigitalTwins({onAddASR}){
+  const [robots,setRobots]=useState(ROBOTS);
+  const dispatch=(id,task)=>{
+    setRobots(r=>r.map(rb=>rb.id===id?{...rb,task,status:'busy'}:rb));
+    onAddASR(`機器人 ${id} 已派遣：${task}`);
+  };
+  const recall=id=>{
+    setRobots(r=>r.map(rb=>rb.id===id?{...rb,task:'待命中',status:'idle'}:rb));
+    onAddASR(`機器人 ${id} 已召回待命`);
+  };
+  return(
+    <div className="page">
+      <div className="card">
+        <div className="card-header"><h3>🤖 Digital Twins — 行動機器人管理</h3></div>
+        <div className="card-body">
+          <div className="robot-grid">
+            {robots.map(rb=>(
+              <div className="robot-card" key={rb.id}>
+                <div className="r-icon">{rb.icon}</div>
+                <div className="r-id">{rb.id}</div>
+                <div className="r-name">{rb.name}</div>
+                <div className="r-task">{rb.task}</div>
+                <div><span className={`r-status ${rb.status==='active'?'status-active':rb.status==='busy'?'status-busy':'status-idle'}`}>
+                  {rb.status==='active'?'執行中':rb.status==='busy'?'忙碌':'待命'}
+                </span></div>
+                <div style={{marginTop:10,display:'flex',gap:6,flexWrap:'wrap'}}>
+                  {rb.status!=='active'&&<button className="btn btn-primary btn-sm"
+                    onClick={()=>dispatch(rb.id,'協助病人翻身，一般病房')}>派遣</button>}
+                  {rb.status!=='idle'&&<button className="btn btn-secondary btn-sm"
+                    onClick={()=>recall(rb.id)}>召回</button>}
+                </div>
+              </div>
+            ))}
+          </div>
+          <p style={{fontSize:12,color:'#a0aec0'}}>Digital Twins (DT) 系統：每個機器人都有一個數位分身，即時同步任務狀態至雲端資料庫。</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── ASR: Auto Service Record ──
+function AutoServiceRecord({asrLogs,onAddASR}){
+  const [selPat,setSelPat]=useState(PATIENTS[0]);
+  const [chatMsgs,setChatMsgs]=useState([
+    {role:'system',text:'對話記錄自動儲存中…'},
+    {role:'patient',text:'護士，我有點不舒服。',time:'08:32'},
+    {role:'nurse',text:'哪裡不舒服呢？',time:'08:33'},
+    {role:'patient',text:'腰部有點痛。',time:'08:33'},
+  ]);
+  const [input,setInput]=useState('');
+  const endRef=useRef();
+
+  useEffect(()=>endRef.current?.scrollIntoView({behavior:'smooth'}),[chatMsgs]);
+
+  const send=()=>{
+    if(!input.trim())return;
+    const t=new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+    const msg={role:'nurse',text:input,time:t};
+    setChatMsgs(m=>[...m,msg]);
+    onAddASR(`[${selPat.name}] 護士：${input}`);
+    setInput('');
+    setTimeout(()=>{
+      const replies=['我了解了，謝謝護士。','好的，我會注意的。','謝謝您的關心。'];
+      const rep={role:'patient',text:replies[Math.floor(Math.random()*replies.length)],time:new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})};
+      setChatMsgs(m=>[...m,rep]);
+      onAddASR(`[${selPat.name}] 病人：${rep.text}`);
+    },800);
+  };
+
+  return(
+    <div className="page">
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+        <div className="card">
+          <div className="card-header">
+            <h3>💬 ASR 對話記錄</h3>
+            <select style={{fontSize:12,padding:'3px 8px',border:'1px solid #e2e8f0',borderRadius:6}}
+              onChange={e=>setSelPat(PATIENTS.find(p=>p.id===e.target.value))}>
+              {PATIENTS.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </div>
+          <div className="card-body" style={{padding:0}}>
+            <div className="chat-msgs">
+              {chatMsgs.map((m,i)=>(
+                <div key={i} className={`msg msg-${m.role}`}>
+                  {m.role!=='system'&&<span style={{fontSize:10,opacity:.6,display:'block',marginBottom:2}}>
+                    {m.role==='nurse'?'護士':'病人'} {m.time}
+                  </span>}
+                  {m.text}
+                </div>
+              ))}
+              <div ref={endRef}/>
+            </div>
+            <div className="chat-input">
+              <input value={input} onChange={e=>setInput(e.target.value)}
+                placeholder="輸入護士訊息…"
+                onKeyDown={e=>e.key==='Enter'&&send()}/>
+              <button onClick={send}>送出</button>
+            </div>
+          </div>
+        </div>
+        <div className="card">
+          <div className="card-header"><h3>📝 自動記錄日誌</h3></div>
+          <div className="card-body" style={{padding:12}}>
+            <div className="asr-log">
+              {asrLogs.length===0?<span style={{color:'#a0aec0'}}>尚無紀錄</span>:
+              asrLogs.slice().reverse().map((log,i)=>(
+                <div className="asr-entry" key={i}>
+                  <span className="asr-time">{log.time}</span>{log.text}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── ANNS: AI Nurse Notes Summary ──
+function ANNS({history,asrLogs}){
+  const [selPat,setSelPat]=useState(PATIENTS[0]);
+  const [summary,setSummary]=useState('');
+  const [loading,setLoading]=useState(false);
+
+  const generate=async()=>{
+    setLoading(true);setSummary('');
+    const patHistory=history.filter(h=>h.patientId===selPat.id);
+    const patLogs=asrLogs.filter(l=>l.text.includes(selPat.name));
+    const prompt=`你是一位護理系統的 AI 摘要助手。請根據以下資料，為護士生成一份簡潔的護理摘要（中文，3-5句）。
+
+病人：${selPat.name}，${selPat.age}歲，${selPat.gender}，病房：${selPat.ward}
+診斷：${selPat.diagnosis}
+DURA評估次數：${patHistory.length}次
+${patHistory.length>0?`最近分數：${patHistory[patHistory.length-1].score}分（${getRisk(patHistory[patHistory.length-1].score).label}）`:'尚無DURA評估'}
+服務紀錄：${patLogs.length>0?patLogs.map(l=>l.text).join('；'):'尚無紀錄'}
+
+請生成護理摘要：`;
+
+    try{
+      const res=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          model:'claude-sonnet-4-6',
+          max_tokens:1000,
+          messages:[{role:'user',content:prompt}]
+        })
+      });
+      const data=await res.json();
+      setSummary(data.content?.[0]?.text||'無法取得摘要，請稍後再試。');
+    }catch(e){
+      // fallback mock
+      setSummary(`【護理摘要 — ${selPat.name}】\n\n病人目前入住${selPat.ward}病房，診斷為${selPat.diagnosis}。${patHistory.length>0?`已完成 ${patHistory.length} 次 DURA 壓瘡評估，最近評估分數為 ${patHistory[patHistory.length-1].score} 分（${getRisk(patHistory[patHistory.length-1].score).label}），需持續關注皮膚狀況。`:'尚未進行 DURA 評估，建議儘早安排。'}護理人員應按時翻身，保持皮膚清潔乾燥，並記錄每班護理紀錄。（本摘要由 AI 自動生成）`);
+    }
+    setLoading(false);
+  };
+
+  return(
+    <div className="page">
+      <div className="card">
+        <div className="card-header">
+          <h3>🧠 ANNS — AI 自動護理摘要</h3>
+          <select style={{fontSize:12,padding:'3px 8px',border:'1px solid #e2e8f0',borderRadius:6}}
+            onChange={e=>setSelPat(PATIENTS.find(p=>p.id===e.target.value))}>
+            {PATIENTS.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+        </div>
+        <div className="card-body">
+          <p style={{fontSize:13,color:'#718096',marginBottom:14}}>
+            選擇病人後，AI 將根據 DURA 評估紀錄與 ASR 服務記錄，自動生成護理摘要，供接班護士參考。
+          </p>
+          <button className="btn btn-purple" onClick={generate} disabled={loading}>
+            {loading?'⏳ AI 生成中…':'✨ 生成護理摘要'}
+          </button>
+          {(summary||loading)&&<div style={{marginTop:14}}>
+            <div className="anns-output">
+              {loading?<span className="anns-loading">AI 正在分析病人資料並生成摘要…</span>:summary}
+            </div>
+          </div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── ACT: Auto Conversion Translation ──
+function ACT(){
+  const [input,setInput]=useState('');
+  const [lang,setLang]=useState('en');
+  const [result,setResult]=useState('');
+  const langs=[{id:'en',label:'English'},{id:'hakka',label:'客語'},{id:'taiwanese',label:'台語'}];
+
+  const translate=()=>{
+    const found=ACT_DICT[input.trim()];
+    if(found)setResult(found[lang]||'（無對應翻譯）');
+    else setResult(`（示範模式）"${input}" → ${lang==='en'?'English translation':lang==='hakka'?'客語翻譯':'台語翻譯'} 結果`);
+  };
+
+  return(
+    <div className="page">
+      <div className="card">
+        <div className="card-header"><h3>🌐 ACT — 自動會話翻譯</h3></div>
+        <div className="card-body">
+          <p style={{fontSize:13,color:'#718096',marginBottom:16}}>
+            支援國語、英語、客語、台語互譯，協助護士與不同語言背景的病人溝通。
+          </p>
+          <div className="fg"><label>輸入中文</label>
+            <div style={{display:'flex',gap:8}}>
+              <input value={input} onChange={e=>setInput(e.target.value)} placeholder="例：你好 / 請問您有哪裡不舒服？"
+                onKeyDown={e=>e.key==='Enter'&&translate()}/>
+              <button className="btn btn-primary" onClick={translate}>翻譯</button>
+            </div>
+          </div>
+          <div className="act-langs">
+            {langs.map(l=>(
+              <div key={l.id} className={`act-lang-btn${lang===l.id?' active':''}`} onClick={()=>setLang(l.id)}>{l.label}</div>
+            ))}
+          </div>
+          {result&&<div className="act-result">{result}</div>}
+          <div style={{marginTop:16}}>
+            <p style={{fontSize:12,color:'#a0aec0',marginBottom:8}}>常用例句（點擊快速翻譯）：</p>
+            <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+              {Object.keys(ACT_DICT).map(k=>(
+                <span key={k} style={{background:'#edf2f7',padding:'3px 10px',borderRadius:6,fontSize:12,cursor:'pointer',color:'#4a5568'}}
+                  onClick={()=>{setInput(k);setResult(ACT_DICT[k][lang]||'（無對應）')}}>{k}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── AMD: Auto Medication Dispatch ──
+function AMD({onAddASR}){
+  const [meds,setMeds]=useState(MEDS);
+  const [form,setForm]=useState({patient:'',med:'',qty:1});
+
+  const advance=id=>{
+    setMeds(m=>m.map(x=>x.id===id&&x.status<4?{...x,status:x.status+1}:x));
+    const med=meds.find(x=>x.id===id);
+    if(med)onAddASR(`[AMD] ${med.name} 配送進度更新：${AMD_STEPS[Math.min(med.status+1,4)]}`);
+  };
+
+  const add=()=>{
+    if(!form.patient||!form.med)return;
+    const newMed={id:`M${Date.now()}`,name:form.med,patient:form.patient,qty:form.qty,status:0};
+    setMeds(m=>[...m,newMed]);
+    onAddASR(`[AMD] 新增藥物配送：${form.med} → ${form.patient}`);
+    setForm({patient:'',med:'',qty:1});
+  };
+
+  return(
+    <div className="page">
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+        <div className="card">
+          <div className="card-header"><h3>💊 AMD — 新增配送單</h3></div>
+          <div className="card-body">
+            <div className="fg"><label>病人</label>
+              <select value={form.patient} onChange={e=>setForm(f=>({...f,patient:e.target.value}))}>
+                <option value=''>選擇病人</option>
+                {PATIENTS.map(p=><option key={p.id} value={p.name}>{p.name}（{p.ward}）</option>)}
+              </select>
+            </div>
+            <div className="fg"><label>藥物名稱</label>
+              <input value={form.med} onChange={e=>setForm(f=>({...f,med:e.target.value}))} placeholder="例：Aspirin 100mg"/>
+            </div>
+            <div className="fg"><label>數量</label>
+              <input type="number" min={1} value={form.qty} onChange={e=>setForm(f=>({...f,qty:+e.target.value}))}/>
+            </div>
+            <button className="btn btn-primary" onClick={add}>📦 建立配送單</button>
+          </div>
+        </div>
+        <div className="card">
+          <div className="card-header"><h3>🚚 配送狀態追蹤</h3></div>
+          <div className="card-body" style={{padding:0}}>
+            <table className="tbl"><thead><tr><th>藥物</th><th>病人</th><th>進度</th><th>操作</th></tr></thead>
+            <tbody>{meds.map(m=>(
+              <tr key={m.id}>
+                <td style={{fontWeight:600}}>{m.name}</td>
+                <td>{m.patient}</td>
+                <td>
+                  <div className="amd-track">
+                    {AMD_STEPS.map((s,i)=>[
+                      i>0&&<div key={`l${i}`} className={`amd-line${i<=m.status?' done':''}`}/>,
+                      <div key={`s${i}`} className="amd-step" style={{flex:'0 0 auto'}}>
+                        <div className={`amd-dot${i<m.status?' done':i===m.status?' active':''}`}>
+                          {i<m.status?'✓':i+1}
+                        </div>
+                      </div>
+                    ])}
+                  </div>
+                  <div style={{fontSize:11,color:m.status===4?'#276749':'#718096',textAlign:'center'}}>{AMD_STEPS[m.status]}</div>
+                </td>
+                <td>{m.status<4&&<button className="btn btn-primary btn-sm" onClick={()=>advance(m.id)}>→ 下一步</button>}</td>
+              </tr>
+            ))}</tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── App ──
+function App(){
+  const [user,setUser]=useState(null);
+  const [page,setPage]=useState('dashboard');
+  const [selPat,setSelPat]=useState(null);
+  const [history,setHistory]=useState([]);
+  const [asrLogs,setAsrLogs]=useState([]);
+  const [toast,setToast]=useState('');
+
+  const showToast=msg=>{setToast(msg);setTimeout(()=>setToast(''),2400)};
+  const addASR=text=>{
+    const t=new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    setAsrLogs(l=>[...l,{text,time:t}]);
+  };
+  const saveHistory=rec=>{setHistory(h=>[...h,rec]);showToast(`已儲存 ${rec.patientName} 的評估結果`);};
+
+  if(!user)return <Login onLogin={u=>{setUser(u);showToast(`歡迎，${u.name}！`)}}/>;
+
+  const nav=[
+    {section:'1.3 核心功能'},
+    {id:'dashboard',icon:'🏠',label:'首頁總覽'},
+    {id:'patients',icon:'👥',label:'病人查詢'},
+    {id:'history',icon:'📋',label:'評估歷史'},
+    {section:'1.4 Extra Functions'},
+    {id:'dt',icon:'🤖',label:'DT 數位分身'},
+    {id:'asr',icon:'💬',label:'ASR 服務紀錄'},
+    {id:'anns',icon:'🧠',label:'ANNS AI摘要'},
+    {id:'act',icon:'🌐',label:'ACT 多語翻譯'},
+    {id:'amd',icon:'💊',label:'AMD 藥物配送'},
+  ];
+
+  const titles={dashboard:'首頁總覽',patients:selPat?`DURA — ${selPat.name}`:'病人查詢',
+    history:'評估歷史',dt:'Digital Twins',asr:'Auto Service Record',
+    anns:'Auto Nurse Notes Summary',act:'Auto Conversion Translation',amd:'Auto Medication Dispatch'};
+
+  return(
+    <div className="app">
+      <div className="sidebar">
+        <div className="sidebar-logo"><h2>NNS 護理系統</h2><p>HEPS / DURA 子系統 v2</p></div>
+        <div className="sidebar-nav">
+          {nav.map((n,i)=>n.section
+            ?<div key={i} className="sidebar-section">{n.section}</div>
+            :<div key={n.id} className={`nav-item${page===n.id?' active':''}`}
+              onClick={()=>{setPage(n.id);if(n.id!=='patients')setSelPat(null)}}>
+              <span className="nav-icon">{n.icon}</span>{n.label}
+            </div>
+          )}
+        </div>
+        <div className="sidebar-footer">
+          {user.name}　{user.id}<br/>
+          <span style={{cursor:'pointer',color:'#90cdf4'}} onClick={()=>setUser(null)}>登出</span>
+        </div>
+      </div>
+      <div className="main">
+        <div className="topbar">
+          <span className="topbar-title">{titles[page]}</span>
+          <div className="topbar-right">
+            <span className="badge badge-blue">內科病房</span>
+            <span>{new Date().toLocaleDateString('zh-TW')}</span>
+          </div>
+        </div>
+        <div className="content">
+          {page==='dashboard'&&<Dashboard history={history} asrLogs={asrLogs}/>}
+          {page==='patients'&&!selPat&&<PatientList onSelect={p=>setSelPat(p)}/>}
+          {page==='patients'&&selPat&&<DURAForm patient={selPat} onSave={saveHistory} onCancel={()=>setSelPat(null)} onAddASR={addASR}/>}
+          {page==='history'&&<History history={history}/>}
+          {page==='dt'&&<DigitalTwins onAddASR={addASR}/>}
+          {page==='asr'&&<AutoServiceRecord asrLogs={asrLogs} onAddASR={addASR}/>}
+          {page==='anns'&&<ANNS history={history} asrLogs={asrLogs}/>}
+          {page==='act'&&<ACT/>}
+          {page==='amd'&&<AMD onAddASR={addASR}/>}
+        </div>
+      </div>
+      {toast&&<Toast msg={toast} onDone={()=>setToast('')}/>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
