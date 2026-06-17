@@ -336,11 +336,30 @@ async function saveState(ns){
     showNotice('儲存失敗,請檢查網路後再試一次。('+errMsg(e)+')');
   }
 }
+/* Firebase Realtime Database silently omits keys whose value is an empty
+   array/null, so fields like an empty discard pile or faceUpRemoved come
+   back missing instead of []. Restore sane defaults on every read. */
+function normalizeState(ns){
+  if(!ns) return ns;
+  ns.log = ns.log || [];
+  ns.deck = ns.deck || [];
+  ns.faceUpRemoved = ns.faceUpRemoved || [];
+  ns.roundWinners = ns.roundWinners || [];
+  ns.championIds = ns.championIds || [];
+  ns.removedCard = (ns.removedCard===undefined) ? null : ns.removedCard;
+  ns.currentPlayerId = (ns.currentPlayerId===undefined) ? null : ns.currentPlayerId;
+  ns.players = (ns.players||[]).map(p=>{
+    p.hand = p.hand || [];
+    p.discardPile = p.discardPile || [];
+    return p;
+  });
+  return ns;
+}
 function subscribeRoom(code){
   if(roomRef) roomRef.off();
   roomRef=db.ref('rooms/'+code);
   roomRef.on('value', snap=>{
-    const ns=snap.val();
+    const ns=normalizeState(snap.val());
     if(!ns) return;
     if(JSON.stringify(ns)!==JSON.stringify(state)){
       if(state && ns.currentPlayerId!==state.currentPlayerId) localUI={stage:null,selectedCard:null,targetId:null,guess:null};
@@ -404,7 +423,7 @@ async function doJoinRoom(){
   try{ snap=await db.ref('rooms/'+code).get(); }
   catch(e){ showNotice('找不到這個房間,請確認代碼是否正確。('+errMsg(e)+')'); return; }
   if(!snap.exists()){ showNotice('找不到這個房間,請確認代碼是否正確。'); return; }
-  const ns=snap.val();
+  const ns=normalizeState(snap.val());
   if(ns.status!=='lobby'){ showNotice('這個房間的遊戲已經開始了,無法加入。'); return; }
   if(ns.players.length>=4){ showNotice('房間已滿(最多 4 人)。'); return; }
   if(ns.players.some(p=>p.name===name)){ showNotice('這個名字已經有人用了,換一個吧。'); return; }
@@ -1115,7 +1134,7 @@ async function init(){
       try{
         const snap=await db.ref('rooms/'+data.roomCode).get();
         if(snap.exists()){
-          const ns=snap.val();
+          const ns=normalizeState(snap.val());
           if(ns.players.find(p=>p.id===data.myId)){
             roomCode=data.roomCode; myId=data.myId; myName=data.myName;
             state=ns; render(); subscribeRoom(data.roomCode); return;
