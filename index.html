@@ -1,784 +1,1136 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>NNS 護理系統 v2 — HEPS/DURA</title>
-<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>命運情書 · Love Letter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Noto+Serif+TC:wght@500;700&family=EB+Garamond:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh;color:#1a202c}
-.app{display:flex;height:100vh;overflow:hidden}
-.sidebar{width:230px;background:#1a365d;color:#fff;display:flex;flex-direction:column;flex-shrink:0}
-.sidebar-logo{padding:18px 16px 12px;border-bottom:1px solid #2d4a7a}
-.sidebar-logo h2{font-size:14px;font-weight:700;color:#63b3ed}
-.sidebar-logo p{font-size:10px;color:#90cdf4;margin-top:2px}
-.sidebar-section{padding:8px 16px 4px;font-size:10px;color:#4a6fa5;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:4px}
-.sidebar-nav{flex:1;padding:4px 0;overflow-y:auto}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;font-size:12.5px;color:#bee3f8;transition:background .15s;border-left:3px solid transparent}
-.nav-item:hover{background:#2d4a7a;color:#fff}
-.nav-item.active{background:#2a4365;color:#fff;border-left-color:#63b3ed}
-.nav-icon{font-size:15px;width:18px;text-align:center}
-.sidebar-footer{padding:12px 16px;border-top:1px solid #2d4a7a;font-size:11px;color:#90cdf4}
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.topbar{background:#fff;border-bottom:1px solid #e2e8f0;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.topbar-title{font-size:15px;font-weight:600;color:#2d3748}
-.topbar-right{font-size:12px;color:#718096;display:flex;align-items:center;gap:10px}
-.badge{padding:2px 8px;border-radius:9px;font-size:11px;font-weight:600}
-.badge-blue{background:#ebf8ff;color:#2b6cb0}
-.badge-green{background:#f0fff4;color:#276749}
-.badge-red{background:#fff5f5;color:#c53030}
-.badge-yellow{background:#fffff0;color:#744210}
-.badge-purple{background:#faf5ff;color:#6b46c1}
-.content{flex:1;overflow-y:auto;padding:24px}
-.page{animation:fadeIn .18s ease}
-@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+  :root{
+    --bg-deeper:#1a0509;
+    --bg-deep:#330c12;
+    --wine:#5c1320;
+    --wine-light:#7a1c2b;
+    --parchment:#f3e6c8;
+    --parchment-dark:#e3cd9c;
+    --ink:#2c1c12;
+    --ink-soft:#5a4630;
+    --gold:#c8a13d;
+    --gold-light:#e9cd7e;
+    --gold-deep:#8a6315;
+    --danger:#8b2c2c;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse at 50% -10%, rgba(201,164,80,0.10), transparent 55%),
+      radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.55), transparent 60%),
+      linear-gradient(160deg, var(--bg-deep), var(--bg-deeper) 70%);
+    font-family:'EB Garamond', 'Noto Serif TC', serif;
+    color:var(--parchment);
+    display:flex;
+    justify-content:center;
+    padding:18px 12px 60px;
+  }
+  .display{font-family:'Cormorant Garamond','Noto Serif TC',serif;}
+  #app{width:100%;max-width:560px;}
 
-/* login */
-.login-wrap{min-height:100vh;background:#1a365d;display:flex;align-items:center;justify-content:center}
-.login-card{background:#fff;border-radius:12px;padding:40px 36px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
-.login-card h1{font-size:22px;font-weight:700;color:#1a365d;margin-bottom:4px}
-.login-card .sub{font-size:13px;color:#718096;margin-bottom:28px}
+  .glow-wrap{position:relative;text-align:center;margin-bottom:18px;padding-top:6px;}
+  .glow{
+    position:absolute;left:50%;top:6px;transform:translateX(-50%);
+    width:240px;height:120px;border-radius:50%;
+    background:radial-gradient(circle, rgba(232,205,126,0.35), transparent 70%);
+    filter:blur(6px);
+    animation:flicker 4.5s ease-in-out infinite;
+    pointer-events:none;
+  }
+  @keyframes flicker{0%,100%{opacity:.55;}50%{opacity:1;}}
+  h1.title{
+    position:relative;z-index:1;
+    font-family:'Cormorant Garamond','Noto Serif TC',serif;
+    font-weight:700;
+    font-size:34px;
+    letter-spacing:2px;
+    color:var(--gold-light);
+    margin:0;
+    text-shadow:0 2px 14px rgba(232,205,126,0.35);
+  }
+  .subtitle{position:relative;z-index:1;color:var(--parchment-dark);font-style:italic;font-size:14px;margin-top:4px;opacity:.85;}
 
-/* forms */
-.fg{margin-bottom:14px}
-.fg label{display:block;font-size:11px;font-weight:700;color:#4a5568;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
-.fg input,.fg select,.fg textarea{width:100%;padding:8px 11px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:13px;color:#2d3748;outline:none;transition:border .15s;font-family:inherit}
-.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:#4299e1}
-.fg textarea{resize:vertical;min-height:72px}
+  .panel{
+    background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.12)), var(--wine);
+    border:1px solid rgba(201,164,80,0.45);
+    border-radius:10px;
+    padding:18px 16px;
+    margin-bottom:14px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.35);
+  }
+  .panel h2{
+    font-family:'Cormorant Garamond','Noto Serif TC',serif;
+    font-size:19px;color:var(--gold-light);margin:0 0 10px;letter-spacing:1px;
+    border-bottom:1px solid rgba(201,164,80,0.3);padding-bottom:8px;
+  }
+  label{display:block;font-size:13px;color:var(--parchment-dark);margin-bottom:5px;letter-spacing:.5px;}
+  input[type=text]{
+    width:100%;padding:10px 12px;border-radius:6px;border:1px solid rgba(201,164,80,0.5);
+    background:rgba(243,230,200,0.95);color:var(--ink);font-family:'EB Garamond',serif;font-size:16px;
+    margin-bottom:12px;
+  }
+  input[type=text]:focus{outline:2px solid var(--gold-light);}
 
-/* buttons */
-.btn{padding:8px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
-.btn-primary{background:#2b6cb0;color:#fff}.btn-primary:hover{background:#2c5282}
-.btn-primary:disabled{background:#a0aec0;cursor:not-allowed}
-.btn-secondary{background:#edf2f7;color:#4a5568}.btn-secondary:hover{background:#e2e8f0}
-.btn-success{background:#276749;color:#fff}.btn-success:hover{background:#22543d}
-.btn-danger{background:#fff5f5;color:#c53030;border:1.5px solid #fed7d7}.btn-danger:hover{background:#fed7d7}
-.btn-purple{background:#6b46c1;color:#fff}.btn-purple:hover{background:#553c9a}
-.btn-sm{padding:4px 11px;font-size:12px}
-.btn-full{width:100%;justify-content:center;padding:11px}
+  .btn{
+    display:inline-block;cursor:pointer;border:1px solid var(--gold-deep);
+    background:linear-gradient(180deg, var(--parchment-dark), var(--parchment));
+    color:var(--ink);font-family:'Noto Serif TC',serif;font-weight:700;font-size:14px;
+    padding:10px 18px;border-radius:6px;text-align:center;
+    box-shadow:0 3px 8px rgba(0,0,0,0.3);
+    transition:transform .12s ease;
+    user-select:none;
+  }
+  .btn:active{transform:scale(0.96);}
+  .btn.secondary{background:transparent;color:var(--parchment-dark);border-color:rgba(201,164,80,0.4);box-shadow:none;}
+  .btn.full{display:block;width:100%;}
+  .btn:disabled, .btn.disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;}
 
-/* cards */
-.card{background:#fff;border-radius:10px;border:1px solid #e2e8f0;margin-bottom:16px}
-.card-header{padding:13px 18px;border-bottom:1px solid #edf2f7;display:flex;align-items:center;justify-content:space-between;gap:8px}
-.card-header h3{font-size:14px;font-weight:600;color:#2d3748}
-.card-body{padding:18px}
+  .seal-wrap{display:flex;justify-content:center;margin:18px 0;}
+  .seal{
+    width:118px;height:118px;border-radius:50%;
+    background:radial-gradient(circle at 35% 28%, var(--gold-light), var(--gold) 55%, var(--gold-deep) 100%);
+    border:2px solid #4a3408;
+    box-shadow:0 8px 16px rgba(0,0,0,0.5), inset 0 -6px 12px rgba(0,0,0,0.3), inset 0 5px 9px rgba(255,255,255,0.3);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    color:#3a2300;font-family:'Cormorant Garamond',serif;font-weight:700;letter-spacing:1px;
+    cursor:pointer;transition:transform .15s ease, box-shadow .15s ease;
+    text-align:center;line-height:1.15;
+  }
+  .seal span{font-size:14px;}
+  .seal small{font-size:10px;opacity:.75;font-weight:500;}
+  .seal:active{transform:scale(0.9);box-shadow:0 2px 6px rgba(0,0,0,0.5), inset 0 6px 10px rgba(0,0,0,0.4);}
+  .seal.disabled{filter:grayscale(0.6) brightness(0.7);cursor:not-allowed;}
 
-/* stats */
-.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
-.stat{background:#f7fafc;border-radius:8px;padding:13px;border:1px solid #e2e8f0;text-align:center}
-.stat-num{font-size:26px;font-weight:700;color:#2b6cb0}
-.stat-label{font-size:10px;color:#718096;margin-top:2px}
+  .room-code{
+    background:var(--parchment);color:var(--ink);border-radius:8px;
+    padding:14px;text-align:center;letter-spacing:6px;font-size:30px;
+    font-family:'Cormorant Garamond',serif;font-weight:700;
+    border:1px dashed var(--gold-deep);margin-bottom:10px;
+  }
 
-/* table */
-.tbl{width:100%;border-collapse:collapse;font-size:13px}
-.tbl th{background:#f7fafc;padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e2e8f0}
-.tbl td{padding:9px 12px;border-bottom:1px solid #f0f4f8;color:#4a5568;vertical-align:middle}
-.tbl tr:hover td{background:#f7fafc}
-.tbl tr:last-child td{border-bottom:none}
+  .player-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:9px 10px;border-radius:6px;margin-bottom:6px;
+    background:rgba(0,0,0,0.18);border:1px solid rgba(201,164,80,0.18);
+    font-size:14px;
+  }
+  .player-row.active{border-color:var(--gold-light);background:rgba(201,164,80,0.16);}
+  .player-row.dead{opacity:0.45;text-decoration:line-through;}
+  .tag{font-size:10px;padding:2px 6px;border-radius:10px;margin-left:6px;letter-spacing:.5px;}
+  .tag.turn{background:var(--gold);color:#2c1c00;}
+  .tag.prot{background:#355c3a;color:#dfffe6;}
+  .tag.host{background:#3a3a55;color:#dde0ff;}
+  .tokens{display:flex;gap:3px;}
+  .token-dot{width:9px;height:9px;border-radius:50%;background:var(--gold-light);box-shadow:0 0 3px rgba(232,205,126,0.7);}
 
-/* dura */
-.dura-item{display:grid;grid-template-columns:1fr 230px;gap:16px;align-items:start;padding:13px 0;border-bottom:1px solid #f0f4f8}
-.dura-item:last-child{border-bottom:none}
-.dura-label{font-size:13px;font-weight:600;color:#2d3748}
-.dura-desc{font-size:11px;color:#718096;margin-top:3px}
-.dura-opts{display:flex;flex-direction:column;gap:5px}
-.dura-opt{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#4a5568;padding:5px 8px;border-radius:6px;border:1.5px solid #e2e8f0;transition:all .12s}
-.dura-opt:hover{border-color:#90cdf4;background:#ebf8ff}
-.dura-opt.selected{border-color:#3182ce;background:#ebf8ff;color:#2b6cb0;font-weight:600}
-.score-box{background:#1a365d;color:#fff;border-radius:10px;padding:20px;text-align:center;margin-top:16px}
-.score-num{font-size:48px;font-weight:700}
-.risk-badge{display:inline-block;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:700;margin-top:8px}
-.risk-low{background:#c6f6d5;color:#276749}
-.risk-med{background:#fefcbf;color:#744210}
-.risk-high{background:#fed7d7;color:#9b2c2c}
+  .card{
+    position:relative;
+    background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.015) 0 2px, transparent 2px 4px),
+      radial-gradient(circle at 20% 15%, rgba(255,255,255,0.5), transparent 40%),
+      var(--parchment);
+    color:var(--ink);
+    border-radius:8px;border:1px solid var(--gold-deep);
+    padding:14px 12px 10px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.35);
+    cursor:pointer;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .card:hover{transform:translateY(-3px);}
+  .card.selected{outline:3px solid var(--gold-light);transform:translateY(-4px);}
+  .card.locked{cursor:not-allowed;opacity:0.5;}
+  .card .roman{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:var(--gold-deep);}
+  .card .cname{font-family:'Noto Serif TC',serif;font-weight:700;font-size:16px;margin:2px 0 4px;}
+  .card .cdesc{font-size:12px;font-style:italic;color:var(--ink-soft);line-height:1.4;}
+  .cards-row{display:flex;gap:10px;}
+  .cards-row .card{flex:1;}
 
-/* search */
-.search-bar{display:flex;gap:8px;margin-bottom:14px}
-.search-bar input{flex:1;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:13px;outline:none}
-.search-bar input:focus{border-color:#4299e1}
+  .small-card{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:26px;height:34px;border-radius:4px;background:var(--parchment-dark);
+    color:var(--ink);font-weight:700;font-size:12px;border:1px solid var(--gold-deep);
+    margin-right:4px;margin-bottom:4px;
+  }
+  .discard-row{display:flex;flex-wrap:wrap;margin-top:4px;}
 
-/* robot card */
-.robot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:16px}
-.robot-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px}
-.robot-card .r-icon{font-size:28px;margin-bottom:8px}
-.robot-card .r-id{font-size:11px;color:#a0aec0;margin-bottom:4px}
-.robot-card .r-name{font-size:13px;font-weight:700;color:#2d3748;margin-bottom:6px}
-.robot-card .r-task{font-size:12px;color:#718096}
-.robot-card .r-status{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;margin-top:8px}
-.status-active{background:#c6f6d5;color:#276749}
-.status-idle{background:#edf2f7;color:#718096}
-.status-busy{background:#fefcbf;color:#744210}
+  .target-grid{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;}
+  .pill{
+    padding:8px 14px;border-radius:20px;background:rgba(243,230,200,0.12);
+    border:1px solid rgba(201,164,80,0.5);color:var(--parchment);font-size:13px;cursor:pointer;
+  }
+  .pill.sel{background:var(--gold);color:#2c1c00;border-color:var(--gold-light);font-weight:700;}
+  .guess-grid{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;}
+  .guess-pill{
+    width:auto;padding:7px 10px;border-radius:6px;font-size:12px;cursor:pointer;
+    background:rgba(243,230,200,0.1);border:1px solid rgba(201,164,80,0.4);color:var(--parchment);
+  }
+  .guess-pill.sel{background:var(--gold);color:#2c1c00;font-weight:700;}
 
-/* chat */
-.chat-wrap{border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;margin-bottom:12px}
-.chat-msgs{height:220px;overflow-y:auto;padding:14px;background:#f7fafc;display:flex;flex-direction:column;gap:8px}
-.msg{max-width:75%;padding:8px 12px;border-radius:10px;font-size:13px;line-height:1.5}
-.msg-nurse{background:#2b6cb0;color:#fff;align-self:flex-end;border-bottom-right-radius:3px}
-.msg-patient{background:#fff;border:1px solid #e2e8f0;color:#2d3748;align-self:flex-start;border-bottom-left-radius:3px}
-.msg-system{background:#e9d8fd;color:#553c9a;align-self:center;font-size:11px;padding:4px 10px}
-.chat-input{display:flex;border-top:1px solid #e2e8f0}
-.chat-input input{flex:1;padding:10px 14px;border:none;font-size:13px;outline:none;font-family:inherit}
-.chat-input button{padding:10px 16px;background:#2b6cb0;color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:600}
+  .log-box{
+    background:rgba(0,0,0,0.22);border-radius:8px;padding:10px 12px;max-height:160px;overflow-y:auto;
+    font-size:12.5px;color:var(--parchment-dark);line-height:1.6;
+  }
+  .log-box div{padding:2px 0;border-bottom:1px dashed rgba(201,164,80,0.12);}
+  .highlight-banner{
+    background:linear-gradient(180deg, rgba(201,164,80,0.18), rgba(201,164,80,0.06));
+    border:1px solid rgba(201,164,80,0.55);border-radius:8px;
+    padding:12px 14px;margin-bottom:14px;
+    font-size:15px;line-height:1.6;color:var(--parchment);
+  }
+  .highlight-banner .eyebrow{font-size:11px;letter-spacing:1px;color:var(--gold-light);text-transform:uppercase;margin-bottom:4px;}
+  .highlight-banner .prev{opacity:0.55;font-size:13px;margin-top:4px;}
+  .hint{font-size:12px;color:var(--parchment-dark);opacity:.8;margin-top:6px;}
+  .center-text{text-align:center;}
+  .mt8{margin-top:8px;}
+  .mt14{margin-top:14px;}
 
-/* asr log */
-.asr-log{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;max-height:200px;overflow-y:auto;font-size:12px;color:#4a5568;line-height:1.8}
-.asr-entry{padding:3px 0;border-bottom:1px solid #edf2f7}
-.asr-entry:last-child{border-bottom:none}
-.asr-time{color:#a0aec0;margin-right:8px;font-size:11px}
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;
+    z-index:50;padding:20px;
+  }
+  .modal-box{
+    background:var(--parchment);color:var(--ink);border-radius:10px;padding:20px;max-width:420px;width:100%;
+    max-height:80vh;overflow-y:auto;border:2px solid var(--gold-deep);
+  }
+  .modal-box h3{font-family:'Cormorant Garamond',serif;margin-top:0;color:var(--ink);}
+  .rule-item{margin-bottom:12px;border-bottom:1px solid rgba(0,0,0,0.1);padding-bottom:8px;}
+  .rule-item b{color:var(--gold-deep);}
+  .top-link{position:fixed;top:10px;right:14px;font-size:12px;color:var(--parchment-dark);cursor:pointer;text-decoration:underline;z-index:30;}
 
-/* anns */
-.anns-output{background:#f0fff4;border:1px solid #9ae6b4;border-radius:8px;padding:14px;font-size:13px;line-height:1.8;color:#276749;white-space:pre-wrap;min-height:80px}
-.anns-loading{color:#a0aec0;font-style:italic}
-
-/* amd */
-.amd-track{display:flex;align-items:center;gap:0;margin:12px 0}
-.amd-step{flex:1;text-align:center;font-size:11px;color:#a0aec0}
-.amd-step.done{color:#276749;font-weight:600}
-.amd-step.active{color:#2b6cb0;font-weight:700}
-.amd-dot{width:28px;height:28px;border-radius:50%;border:2px solid #e2e8f0;background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;margin:0 auto 4px}
-.amd-dot.done{border-color:#276749;background:#f0fff4}
-.amd-dot.active{border-color:#2b6cb0;background:#ebf8ff;animation:pulse 1s infinite}
-.amd-line{flex:0 0 30px;height:2px;background:#e2e8f0;margin-bottom:20px}
-.amd-line.done{background:#276749}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(43,108,176,.3)}50%{box-shadow:0 0 0 6px rgba(43,108,176,0)}}
-
-/* toast */
-.toast{position:fixed;bottom:24px;right:24px;background:#2d3748;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:999;animation:slideUp .25s ease}
-@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-
-/* act */
-.act-langs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-.act-lang-btn{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #e2e8f0;background:#fff;color:#4a5568;transition:all .15s}
-.act-lang-btn.active{border-color:#2b6cb0;background:#ebf8ff;color:#2b6cb0}
-.act-result{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;font-size:14px;color:#2d3748;min-height:60px;line-height:1.8}
-
-@media print{.sidebar,.topbar,.no-print{display:none!important}.content{padding:0}}
+  .champion-banner{
+    text-align:center;font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--gold-light);
+    padding:14px 0;text-shadow:0 2px 12px rgba(232,205,126,0.4);
+  }
+  @media (max-width:380px){
+    h1.title{font-size:27px;}
+    .seal{width:100px;height:100px;}
+  }
 </style>
 </head>
 <body>
-<div id="root"></div>
-<script type="text/babel">
-const {useState,useEffect,useRef} = React;
+<div class="top-link" onclick="toggleRules()">規則 ‣</div>
+<div class="top-link" id="leaveLink" style="left:14px;right:auto;display:none;" onclick="toggleRoomMenu()">‣ 房間選項</div>
+<div id="app"></div>
 
-const PATIENTS=[
-  {id:'P001',name:'王小明',ward:'內科',bed:'101A',age:72,gender:'男',diagnosis:'糖尿病、高血壓'},
-  {id:'P002',name:'李美華',ward:'外科',bed:'203B',age:65,gender:'女',diagnosis:'膽囊炎術後'},
-  {id:'P003',name:'陳大同',ward:'骨科',bed:'312C',age:80,gender:'男',diagnosis:'髖關節置換術後'},
-  {id:'P004',name:'張雅芳',ward:'神經',bed:'405A',age:58,gender:'女',diagnosis:'腦中風復健'},
-  {id:'P005',name:'林志遠',ward:'內科',bed:'108B',age:76,gender:'男',diagnosis:'慢性腎衰竭'},
-];
-
-const DURA_ITEMS=[
-  {id:'D1',label:'感官知覺',desc:'對壓力引起的不適感反應能力',
-   options:[{text:'完全喪失',score:1},{text:'嚴重受損',score:2},{text:'輕微受損',score:3},{text:'未受損',score:4}]},
-  {id:'D2',label:'潮濕程度',desc:'皮膚暴露於潮濕的程度',
-   options:[{text:'持續潮濕',score:1},{text:'非常潮濕',score:2},{text:'偶爾潮濕',score:3},{text:'很少潮濕',score:4}]},
-  {id:'D3',label:'活動能力',desc:'身體活動程度',
-   options:[{text:'臥床不起',score:1},{text:'侷限椅上',score:2},{text:'偶爾步行',score:3},{text:'經常步行',score:4}]},
-  {id:'D4',label:'移動能力',desc:'改變和控制身體姿勢的能力',
-   options:[{text:'完全不能移動',score:1},{text:'嚴重受限',score:2},{text:'輕微受限',score:3},{text:'未受限',score:4}]},
-  {id:'D5',label:'營養狀況',desc:'一般飲食攝取型態',
-   options:[{text:'非常差',score:1},{text:'可能不足',score:2},{text:'足夠',score:3},{text:'非常好',score:4}]},
-  {id:'D6',label:'摩擦力與剪力',desc:'移動時皮膚摩擦的程度',
-   options:[{text:'有問題',score:1},{text:'潛在問題',score:2},{text:'無明顯問題',score:3}]},
-];
-
-const ROBOTS=[
-  {id:'R001',name:'NurseBot Alpha',icon:'🤖',task:'協助王小明換藥，病房101A',status:'active'},
-  {id:'R002',name:'NurseBot Beta',icon:'🦾',task:'待命中',status:'idle'},
-  {id:'R003',name:'NurseBot Gamma',icon:'🤖',task:'藥物配送至203B',status:'busy'},
-];
-
-const MEDS=[
-  {id:'M001',name:'Metformin 500mg',patient:'王小明',qty:2,status:0},
-  {id:'M002',name:'Warfarin 5mg',patient:'張雅芳',qty:1,status:2},
-  {id:'M003',name:'Furosemide 40mg',patient:'林志遠',qty:1,status:4},
-];
-
-const AMD_STEPS=['收到處方','備藥確認','機器人取藥','配送中','完成配送'];
-
-const ACT_DICT={
-  '你好':       {en:'Hello',hakka:'Ngì hó',taiwanese:'Li-hó'},
-  '請問您有哪裡不舒服？':{en:'Where does it hurt?',hakka:'Ngiá mak-ke m̀-sṳ́-fuk?',taiwanese:'Lí tó-uī bē-sū-hok?'},
-  '我需要幫助': {en:'I need help',hakka:'Ngài yeu pong-chhu',taiwanese:'Guá iàu pang-bâng'},
-  '今天感覺如何？':{en:'How are you feeling today?',hakka:'Kin-ngit gám-kok ngióng-yong?',taiwanese:'Kin-á-ji̍t kám-kak án-tsuánn?'},
-  '請深呼吸':  {en:'Please take a deep breath',hakka:'Chhiáng chhim fî-sit',taiwanese:'Chhiánn chhim-khip-khùi'},
+<script>
+/* ---------------- Firebase setup ----------------
+   Fill these in with your own Firebase project's web config
+   (Firebase console → Project settings → General → Your apps → Web app → SDK setup).
+   These values are not secret — Firebase apps are secured via Realtime Database
+   rules, not by hiding the config. See the setup notes shared alongside this file. */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyD96EgkUG-4ibVF658eNbTsQG3j6-saH_M",
+  authDomain: "loveletter-b1161.firebaseapp.com",
+  databaseURL: "https://loveletter-b1161-default-rtdb.firebaseio.com",
+  projectId: "loveletter-b1161",
+  storageBucket: "loveletter-b1161.firebasestorage.app",
+  messagingSenderId: "88339333761",
+  appId: "1:88339333761:web:e8d3326fb7e588861d8380",
+  measurementId: "G-R4CJG9QZCR"
 };
+const FIREBASE_READY = FIREBASE_CONFIG.apiKey !== "REPLACE_ME";
+let db=null;
+if(FIREBASE_READY){
+  firebase.initializeApp(FIREBASE_CONFIG);
+  db=firebase.database();
+}
 
-const getRisk=score=>{
-  if(score<=12)return{label:'高危險',cls:'risk-high',badge:'badge-red'};
-  if(score<=15)return{label:'中危險',cls:'risk-med',badge:'badge-yellow'};
-  return{label:'低危險',cls:'risk-low',badge:'badge-green'};
+/* ---------------- Card definitions ---------------- */
+const CARDS = {
+  1:{name:'衛兵',roman:'I',count:5,desc:'指定一名玩家並猜測其手牌(不可猜「衛兵」)。猜中則該玩家立即出局。'},
+  2:{name:'神父',roman:'II',count:2,desc:'查看任一玩家的手牌內容。'},
+  3:{name:'男爵',roman:'III',count:2,desc:'與任一玩家秘密比較手牌,點數較小的一方出局。'},
+  4:{name:'侍女',roman:'IV',count:2,desc:'保護自己,直到你的下一回合開始前不會被其他效果指定。'},
+  5:{name:'王子',roman:'V',count:2,desc:'指定任一玩家(包括自己)棄掉手牌,並重新抽一張新牌。'},
+  6:{name:'國王',roman:'VI',count:1,desc:'與任一玩家交換手牌。'},
+  7:{name:'伯爵夫人',roman:'VII',count:1,desc:'若同時持有「國王」或「王子」,必須棄掉此牌。單獨棄掉沒有其他效果。'},
+  8:{name:'公主',roman:'VIII',count:1,desc:'萬萬不可棄掉這張牌——無論原因,棄掉公主就立即出局。'}
 };
+function cardName(v){return CARDS[v]?CARDS[v].name:'?';}
+function cardRoman(v){return CARDS[v]?CARDS[v].roman:'?';}
+function cardDesc(v){return CARDS[v]?CARDS[v].desc:'';}
 
-function Toast({msg,onDone}){
-  useEffect(()=>{const t=setTimeout(onDone,2400);return()=>clearTimeout(t)},[]);
-  return <div className="toast">{msg}</div>;
+/* ---------------- Global session ---------------- */
+let roomCode=null, myId=null, myName='';
+let state=null;
+let localUI={stage:null, selectedCard:null, targetId:null, guess:null};
+let rulesOpen=false;
+let roomMenuOpen=false;
+function toggleRoomMenu(){ roomMenuOpen=!roomMenuOpen; render(); }
+let notice=null; // {title, body}
+
+function showNotice(body, title){
+  notice={title: title||'提醒', body};
+  render();
+}
+function closeNotice(){
+  notice=null;
+  render();
 }
 
-// ── Login ──
-function Login({onLogin}){
-  const [u,setU]=useState('');const [pw,setPw]=useState('');const [err,setErr]=useState('');
-  const go=()=>{if(u==='nurse'&&pw==='1234')onLogin({name:'王護士',id:'N001',ward:'內科'});else setErr('帳號或密碼錯誤');};
-  return(
-    <div className="login-wrap">
-      <div className="login-card">
-        <h1>NNS 護理系統</h1>
-        <p className="sub">HEPS / DURA 壓瘡危險性評估系統　請登入</p>
-        <div className="fg"><label>員工編號</label><input value={u} onChange={e=>setU(e.target.value)} placeholder="nurse" onKeyDown={e=>e.key==='Enter'&&go()}/></div>
-        <div className="fg"><label>密碼</label><input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="1234" onKeyDown={e=>e.key==='Enter'&&go()}/></div>
-        {err&&<p style={{color:'#c53030',fontSize:12,marginBottom:10}}>{err}</p>}
-        <button className="btn btn-primary btn-full" onClick={go}>登入系統</button>
-        <p style={{fontSize:11,color:'#a0aec0',marginTop:10,textAlign:'center'}}>測試帳號：nurse / 1234</p>
-      </div>
-    </div>
-  );
+function genId(){
+  if(window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID();
+  return 'id-'+Math.random().toString(36).slice(2)+Date.now();
+}
+function genRoomCode(){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let c='';
+  for(let i=0;i<4;i++) c+=chars[Math.floor(Math.random()*chars.length)];
+  return c;
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function clone(o){return JSON.parse(JSON.stringify(o));}
+function sumArr(a){return a.reduce((s,v)=>s+v,0);}
+
+/* ---------------- Deck / round setup ---------------- */
+function buildDeck(){
+  let d=[];
+  Object.keys(CARDS).forEach(k=>{
+    const v=Number(k);
+    for(let i=0;i<CARDS[v].count;i++) d.push(v);
+  });
+  for(let i=d.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [d[i],d[j]]=[d[j],d[i]];
+  }
+  return d;
+}
+function startRound(st){
+  st.players.forEach(p=>{p.hand=[];p.discardPile=[];p.alive=true;p.protected=false;});
+  const deck=buildDeck();
+  st.removedCard=deck.pop();
+  st.faceUpRemoved = st.players.length===2 ? [deck.pop(),deck.pop(),deck.pop()] : [];
+  st.players.forEach(p=>{p.hand=[deck.pop()];});
+  st.deck=deck;
+  st.startingPlayerIndex=(st.roundNumber-1) % st.players.length;
+  st.currentPlayerId=st.players[st.startingPlayerIndex].id;
+  st.log=[`第 ${st.roundNumber} 輪開始,由 ${st.players[st.startingPlayerIndex].name} 先出牌。`];
+  st.status='playing';
+  st.roundWinners=[];
 }
 
-// ── Dashboard ──
-function Dashboard({history,asrLogs}){
-  const high=history.filter(h=>getRisk(h.score).label==='高危險').length;
-  return(
-    <div className="page">
-      <div className="stat-row">
-        <div className="stat"><div className="stat-num">{history.length}</div><div className="stat-label">評估次數</div></div>
-        <div className="stat"><div className="stat-num" style={{color:'#c53030'}}>{high}</div><div className="stat-label">高危險</div></div>
-        <div className="stat"><div className="stat-num" style={{color:'#276749'}}>{PATIENTS.length}</div><div className="stat-label">病人數</div></div>
-        <div className="stat"><div className="stat-num" style={{color:'#6b46c1'}}>{asrLogs.length}</div><div className="stat-label">ASR紀錄</div></div>
-      </div>
-      <div className="card">
-        <div className="card-header"><h3>📋 最近評估</h3></div>
-        <div className="card-body" style={{padding:0}}>
-          {history.length===0?<p style={{padding:16,color:'#a0aec0',fontSize:13}}>尚無評估紀錄</p>:
-          <table className="tbl"><thead><tr><th>病人</th><th>分數</th><th>風險</th><th>時間</th></tr></thead>
-          <tbody>{[...history].reverse().slice(0,5).map((h,i)=>{const r=getRisk(h.score);return(
-            <tr key={i}><td style={{fontWeight:600}}>{h.patientName}</td>
-            <td style={{fontWeight:700,color:'#2b6cb0'}}>{h.score}</td>
-            <td><span className={`badge ${r.badge}`}>{r.label}</span></td>
-            <td style={{color:'#a0aec0',fontSize:12}}>{h.time}</td></tr>
-          );})}</tbody></table>}
-        </div>
-      </div>
-    </div>
-  );
+/* ---------------- Storage helpers (Firebase Realtime Database) ---------------- */
+let roomRef=null;
+async function saveState(ns){
+  state=ns;
+  render();
+  try{
+    await db.ref('rooms/'+roomCode).set(ns);
+  }catch(e){
+    showNotice('儲存失敗,請檢查網路後再試一次。('+errMsg(e)+')');
+  }
 }
-
-// ── Patient List ──
-function PatientList({onSelect}){
-  const [q,setQ]=useState('');
-  const f=PATIENTS.filter(p=>p.name.includes(q)||p.ward.includes(q)||p.id.includes(q));
-  return(
-    <div className="page">
-      <div className="search-bar"><input value={q} onChange={e=>setQ(e.target.value)} placeholder="搜尋病人姓名、病房、編號…"/></div>
-      <div className="card"><div className="card-body" style={{padding:0}}>
-        <table className="tbl"><thead><tr><th>編號</th><th>姓名</th><th>病房</th><th>床號</th><th>年齡</th><th>診斷</th><th>操作</th></tr></thead>
-        <tbody>{f.map(p=>(
-          <tr key={p.id}>
-            <td><span className="badge badge-blue">{p.id}</span></td>
-            <td style={{fontWeight:600}}>{p.name}</td><td>{p.ward}</td><td>{p.bed}</td><td>{p.age}</td>
-            <td style={{fontSize:12,color:'#718096'}}>{p.diagnosis}</td>
-            <td><button className="btn btn-primary btn-sm" onClick={()=>onSelect(p)}>開始評估</button></td>
-          </tr>
-        ))}</tbody></table>
-      </div></div>
-    </div>
-  );
-}
-
-// ── DURA Form ──
-function DURAForm({patient,onSave,onCancel,onAddASR}){
-  const [ans,setAns]=useState({});const [saved,setSaved]=useState(false);
-  const [dt,setDt]=useState(()=>new Date().toISOString().slice(0,16));
-  const score=Object.values(ans).reduce((a,b)=>a+b,0);
-  const filled=Object.keys(ans).length===DURA_ITEMS.length;
-  const risk=filled?getRisk(score):null;
-
-  const save=()=>{
-    if(!filled)return;
-    onSave({patientId:patient.id,patientName:patient.name,ward:patient.ward,score,ans,time:dt.replace('T',' ')});
-    onAddASR(`護士完成 ${patient.name} 的 DURA 評估，得分 ${score}，風險：${getRisk(score).label}`);
-    setSaved(true);
-  };
-
-  const print=()=>{
-    const r=getRisk(score);
-    const w=window.open('','_blank','width=800,height:900');
-    w.document.write(`<html><head><title>DURA評估表</title>
-    <style>body{font-family:Arial,sans-serif;padding:32px}h2{color:#1a365d}
-    table{width:100%;border-collapse:collapse;margin-top:20px;font-size:13px}
-    th{background:#ebf8ff;padding:8px 12px;border:1px solid #bee3f8;text-align:left}
-    td{padding:8px 12px;border:1px solid #e2e8f0}
-    .s{font-size:32px;font-weight:700;color:#2b6cb0}
-    .rh{background:#fed7d7;color:#9b2c2c;padding:4px 12px;border-radius:20px;display:inline-block;font-weight:700}
-    .rm{background:#fefcbf;color:#744210;padding:4px 12px;border-radius:20px;display:inline-block;font-weight:700}
-    .rl{background:#c6f6d5;color:#276749;padding:4px 12px;border-radius:20px;display:inline-block;font-weight:700}
-    </style></head><body>
-    <h2>壓瘡危險性評估表 (DURA)</h2>
-    <p>病人：${patient.name}（${patient.id}）　病房：${patient.ward} ${patient.bed}　評估時間：${dt.replace('T',' ')}</p>
-    <table><thead><tr><th>評估項目</th><th>選項</th><th>分數</th></tr></thead><tbody>
-    ${DURA_ITEMS.map(item=>{const o=item.options.find(x=>x.score===ans[item.id]);
-      return`<tr><td>${item.label}</td><td>${o?o.text:'—'}</td><td>${o?o.score:'—'}</td></tr>`;}).join('')}
-    </tbody></table>
-    <div style="margin-top:20px"><div class="s">${score} 分</div>
-    <div class="${r.cls==='risk-high'?'rh':r.cls==='risk-med'?'rm':'rl'}" style="margin-top:8px">${r.label}</div></div>
-    <p style="margin-top:32px;font-size:11px;color:#a0aec0">評估護士：王護士（N001）　${new Date().toLocaleString('zh-TW')}</p>
-    </body></html>`);
-    w.document.close();w.print();
-  };
-
-  return(
-    <div className="page">
-      <div className="card">
-        <div className="card-header">
-          <h3>DURA 評估 — {patient.name}（{patient.ward} {patient.bed}）</h3>
-          <button className="btn btn-secondary btn-sm no-print" onClick={onCancel}>← 返回</button>
-        </div>
-        <div className="card-body">
-          <div className="fg" style={{maxWidth:260,marginBottom:20}}>
-            <label>評估日期時間</label>
-            <input type="datetime-local" value={dt} onChange={e=>setDt(e.target.value)}/>
-          </div>
-          {DURA_ITEMS.map(item=>(
-            <div className="dura-item" key={item.id}>
-              <div><div className="dura-label">{item.label}</div>
-                {item.desc&&<div className="dura-desc">{item.desc}</div>}</div>
-              <div className="dura-opts">{item.options.map(opt=>(
-                <div key={opt.score}
-                  className={`dura-opt${ans[item.id]===opt.score?' selected':''}`}
-                  onClick={()=>setAns(a=>({...a,[item.id]:opt.score}))}>
-                  <span>{opt.text}</span>
-                  <span style={{marginLeft:'auto',fontWeight:700,opacity:.7}}>{opt.score}分</span>
-                </div>
-              ))}</div>
-            </div>
-          ))}
-          {filled&&<div className="score-box">
-            <div className="score-num">{score}</div>
-            <div style={{fontSize:13,opacity:.8,marginTop:4}}>DURA 總分</div>
-            <span className={`risk-badge ${risk.cls}`}>{risk.label}</span>
-          </div>}
-          <div style={{display:'flex',gap:10,marginTop:18}} className="no-print">
-            {!saved
-              ?<button className="btn btn-success" onClick={save} disabled={!filled}>💾 儲存結果</button>
-              :<span style={{color:'#276749',fontSize:13,fontWeight:600}}>✓ 已儲存</span>}
-            {filled&&<button className="btn btn-secondary" onClick={print}>🖨️ 列印表單</button>}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── History ──
-function History({history}){
-  const [q,setQ]=useState('');
-  const f=history.filter(h=>h.patientName.includes(q)||h.ward.includes(q));
-  return(
-    <div className="page">
-      <div className="search-bar"><input value={q} onChange={e=>setQ(e.target.value)} placeholder="搜尋病人或病房…"/></div>
-      <div className="card"><div className="card-body" style={{padding:0}}>
-        {f.length===0?<p style={{padding:16,color:'#a0aec0',fontSize:13}}>尚無評估紀錄</p>:
-        <table className="tbl"><thead><tr><th>病人</th><th>病房</th><th>分數</th><th>風險</th><th>時間</th></tr></thead>
-        <tbody>{[...f].reverse().map((h,i)=>{const r=getRisk(h.score);return(
-          <tr key={i}><td style={{fontWeight:600}}>{h.patientName}</td><td>{h.ward}</td>
-          <td style={{fontWeight:700,fontSize:16,color:'#2b6cb0'}}>{h.score}</td>
-          <td><span className={`badge ${r.badge}`}>{r.label}</span></td>
-          <td style={{color:'#718096',fontSize:12}}>{h.time}</td></tr>
-        );})}</tbody></table>}
-      </div></div>
-    </div>
-  );
-}
-
-// ── DT: Digital Twins ──
-function DigitalTwins({onAddASR}){
-  const [robots,setRobots]=useState(ROBOTS);
-  const dispatch=(id,task)=>{
-    setRobots(r=>r.map(rb=>rb.id===id?{...rb,task,status:'busy'}:rb));
-    onAddASR(`機器人 ${id} 已派遣：${task}`);
-  };
-  const recall=id=>{
-    setRobots(r=>r.map(rb=>rb.id===id?{...rb,task:'待命中',status:'idle'}:rb));
-    onAddASR(`機器人 ${id} 已召回待命`);
-  };
-  return(
-    <div className="page">
-      <div className="card">
-        <div className="card-header"><h3>🤖 Digital Twins — 行動機器人管理</h3></div>
-        <div className="card-body">
-          <div className="robot-grid">
-            {robots.map(rb=>(
-              <div className="robot-card" key={rb.id}>
-                <div className="r-icon">{rb.icon}</div>
-                <div className="r-id">{rb.id}</div>
-                <div className="r-name">{rb.name}</div>
-                <div className="r-task">{rb.task}</div>
-                <div><span className={`r-status ${rb.status==='active'?'status-active':rb.status==='busy'?'status-busy':'status-idle'}`}>
-                  {rb.status==='active'?'執行中':rb.status==='busy'?'忙碌':'待命'}
-                </span></div>
-                <div style={{marginTop:10,display:'flex',gap:6,flexWrap:'wrap'}}>
-                  {rb.status!=='active'&&<button className="btn btn-primary btn-sm"
-                    onClick={()=>dispatch(rb.id,'協助病人翻身，一般病房')}>派遣</button>}
-                  {rb.status!=='idle'&&<button className="btn btn-secondary btn-sm"
-                    onClick={()=>recall(rb.id)}>召回</button>}
-                </div>
-              </div>
-            ))}
-          </div>
-          <p style={{fontSize:12,color:'#a0aec0'}}>Digital Twins (DT) 系統：每個機器人都有一個數位分身，即時同步任務狀態至雲端資料庫。</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── ASR: Auto Service Record ──
-function AutoServiceRecord({asrLogs,onAddASR}){
-  const [selPat,setSelPat]=useState(PATIENTS[0]);
-  const [chatMsgs,setChatMsgs]=useState([
-    {role:'system',text:'對話記錄自動儲存中…'},
-    {role:'patient',text:'護士，我有點不舒服。',time:'08:32'},
-    {role:'nurse',text:'哪裡不舒服呢？',time:'08:33'},
-    {role:'patient',text:'腰部有點痛。',time:'08:33'},
-  ]);
-  const [input,setInput]=useState('');
-  const endRef=useRef();
-
-  useEffect(()=>endRef.current?.scrollIntoView({behavior:'smooth'}),[chatMsgs]);
-
-  const send=()=>{
-    if(!input.trim())return;
-    const t=new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
-    const msg={role:'nurse',text:input,time:t};
-    setChatMsgs(m=>[...m,msg]);
-    onAddASR(`[${selPat.name}] 護士：${input}`);
-    setInput('');
-    setTimeout(()=>{
-      const replies=['我了解了，謝謝護士。','好的，我會注意的。','謝謝您的關心。'];
-      const rep={role:'patient',text:replies[Math.floor(Math.random()*replies.length)],time:new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})};
-      setChatMsgs(m=>[...m,rep]);
-      onAddASR(`[${selPat.name}] 病人：${rep.text}`);
-    },800);
-  };
-
-  return(
-    <div className="page">
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
-        <div className="card">
-          <div className="card-header">
-            <h3>💬 ASR 對話記錄</h3>
-            <select style={{fontSize:12,padding:'3px 8px',border:'1px solid #e2e8f0',borderRadius:6}}
-              onChange={e=>setSelPat(PATIENTS.find(p=>p.id===e.target.value))}>
-              {PATIENTS.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-          </div>
-          <div className="card-body" style={{padding:0}}>
-            <div className="chat-msgs">
-              {chatMsgs.map((m,i)=>(
-                <div key={i} className={`msg msg-${m.role}`}>
-                  {m.role!=='system'&&<span style={{fontSize:10,opacity:.6,display:'block',marginBottom:2}}>
-                    {m.role==='nurse'?'護士':'病人'} {m.time}
-                  </span>}
-                  {m.text}
-                </div>
-              ))}
-              <div ref={endRef}/>
-            </div>
-            <div className="chat-input">
-              <input value={input} onChange={e=>setInput(e.target.value)}
-                placeholder="輸入護士訊息…"
-                onKeyDown={e=>e.key==='Enter'&&send()}/>
-              <button onClick={send}>送出</button>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="card-header"><h3>📝 自動記錄日誌</h3></div>
-          <div className="card-body" style={{padding:12}}>
-            <div className="asr-log">
-              {asrLogs.length===0?<span style={{color:'#a0aec0'}}>尚無紀錄</span>:
-              asrLogs.slice().reverse().map((log,i)=>(
-                <div className="asr-entry" key={i}>
-                  <span className="asr-time">{log.time}</span>{log.text}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── ANNS: AI Nurse Notes Summary ──
-function ANNS({history,asrLogs}){
-  const [selPat,setSelPat]=useState(PATIENTS[0]);
-  const [summary,setSummary]=useState('');
-  const [loading,setLoading]=useState(false);
-
-  const generate=async()=>{
-    setLoading(true);setSummary('');
-    const patHistory=history.filter(h=>h.patientId===selPat.id);
-    const patLogs=asrLogs.filter(l=>l.text.includes(selPat.name));
-    const prompt=`你是一位護理系統的 AI 摘要助手。請根據以下資料，為護士生成一份簡潔的護理摘要（中文，3-5句）。
-
-病人：${selPat.name}，${selPat.age}歲，${selPat.gender}，病房：${selPat.ward}
-診斷：${selPat.diagnosis}
-DURA評估次數：${patHistory.length}次
-${patHistory.length>0?`最近分數：${patHistory[patHistory.length-1].score}分（${getRisk(patHistory[patHistory.length-1].score).label}）`:'尚無DURA評估'}
-服務紀錄：${patLogs.length>0?patLogs.map(l=>l.text).join('；'):'尚無紀錄'}
-
-請生成護理摘要：`;
-
-    try{
-      const res=await fetch('https://api.anthropic.com/v1/messages',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          model:'claude-sonnet-4-6',
-          max_tokens:1000,
-          messages:[{role:'user',content:prompt}]
-        })
-      });
-      const data=await res.json();
-      setSummary(data.content?.[0]?.text||'無法取得摘要，請稍後再試。');
-    }catch(e){
-      // fallback mock
-      setSummary(`【護理摘要 — ${selPat.name}】\n\n病人目前入住${selPat.ward}病房，診斷為${selPat.diagnosis}。${patHistory.length>0?`已完成 ${patHistory.length} 次 DURA 壓瘡評估，最近評估分數為 ${patHistory[patHistory.length-1].score} 分（${getRisk(patHistory[patHistory.length-1].score).label}），需持續關注皮膚狀況。`:'尚未進行 DURA 評估，建議儘早安排。'}護理人員應按時翻身，保持皮膚清潔乾燥，並記錄每班護理紀錄。（本摘要由 AI 自動生成）`);
+function subscribeRoom(code){
+  if(roomRef) roomRef.off();
+  roomRef=db.ref('rooms/'+code);
+  roomRef.on('value', snap=>{
+    const ns=snap.val();
+    if(!ns) return;
+    if(JSON.stringify(ns)!==JSON.stringify(state)){
+      if(state && ns.currentPlayerId!==state.currentPlayerId) localUI={stage:null,selectedCard:null,targetId:null,guess:null};
+      state=ns;
+      render();
     }
-    setLoading(false);
-  };
-
-  return(
-    <div className="page">
-      <div className="card">
-        <div className="card-header">
-          <h3>🧠 ANNS — AI 自動護理摘要</h3>
-          <select style={{fontSize:12,padding:'3px 8px',border:'1px solid #e2e8f0',borderRadius:6}}
-            onChange={e=>setSelPat(PATIENTS.find(p=>p.id===e.target.value))}>
-            {PATIENTS.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
-        </div>
-        <div className="card-body">
-          <p style={{fontSize:13,color:'#718096',marginBottom:14}}>
-            選擇病人後，AI 將根據 DURA 評估紀錄與 ASR 服務記錄，自動生成護理摘要，供接班護士參考。
-          </p>
-          <button className="btn btn-purple" onClick={generate} disabled={loading}>
-            {loading?'⏳ AI 生成中…':'✨ 生成護理摘要'}
-          </button>
-          {(summary||loading)&&<div style={{marginTop:14}}>
-            <div className="anns-output">
-              {loading?<span className="anns-loading">AI 正在分析病人資料並生成摘要…</span>:summary}
-            </div>
-          </div>}
-        </div>
-      </div>
-    </div>
-  );
+  });
+}
+function unsubscribeRoom(){
+  if(roomRef){ roomRef.off(); roomRef=null; }
 }
 
-// ── ACT: Auto Conversion Translation ──
-function ACT(){
-  const [input,setInput]=useState('');
-  const [lang,setLang]=useState('en');
-  const [result,setResult]=useState('');
-  const langs=[{id:'en',label:'English'},{id:'hakka',label:'客語'},{id:'taiwanese',label:'台語'}];
 
-  const translate=()=>{
-    const found=ACT_DICT[input.trim()];
-    if(found)setResult(found[lang]||'（無對應翻譯）');
-    else setResult(`（示範模式）"${input}" → ${lang==='en'?'English translation':lang==='hakka'?'客語翻譯':'台語翻譯'} 結果`);
+/* ---------------- Lobby actions ---------------- */
+function errMsg(e){
+  if(!e) return '未知錯誤';
+  if(typeof e==='string') return e;
+  if(e.message) return e.message;
+  try{ return JSON.stringify(e); }catch(_){ return String(e); }
+}
+async function doCreateRoom(){
+  if(!FIREBASE_READY){
+    showNotice('Firebase 還沒設定好,請先在程式碼最上面填入你的 Firebase 設定。');
+    return;
+  }
+  const nameInput=document.getElementById('nameInput');
+  const name=(nameInput.value||'').trim();
+  if(!name){showNotice('請先輸入你的名字');return;}
+  const id=genId();
+  const code=genRoomCode();
+  const ns={
+    status:'lobby',
+    players:[{id,name,tokens:0,alive:true,protected:false,hand:[],discardPile:[],isBot:false}],
+    hostId:id, deck:[], removedCard:null, faceUpRemoved:[],
+    currentPlayerId:null, log:[], roundNumber:0, tokenGoal:0,
+    championIds:[], roundWinners:[]
   };
+  try{
+    await db.ref('rooms/'+code).set(ns);
+  }catch(e){
+    showNotice('建立房間失敗:'+errMsg(e));
+    return;
+  }
+  myName=name; myId=id; roomCode=code; state=ns; render();
+  subscribeRoom(code);
+  try{ localStorage.setItem('loveletter_session', JSON.stringify({roomCode:code,myId:id,myName:name})); }catch(e){}
+  try{ localStorage.setItem('loveletter_name', name); }catch(e){}
+}
+async function doJoinRoom(){
+  if(!FIREBASE_READY){
+    showNotice('Firebase 還沒設定好,請先在程式碼最上面填入你的 Firebase 設定。');
+    return;
+  }
+  const nameInput=document.getElementById('nameInput');
+  const codeInput=document.getElementById('joinCodeInput');
+  const name=(nameInput.value||'').trim();
+  const code=(codeInput.value||'').trim().toUpperCase();
+  if(!name){showNotice('請先輸入你的名字');return;}
+  if(!code){showNotice('請輸入房間代碼');return;}
+  let snap;
+  try{ snap=await db.ref('rooms/'+code).get(); }
+  catch(e){ showNotice('找不到這個房間,請確認代碼是否正確。('+errMsg(e)+')'); return; }
+  if(!snap.exists()){ showNotice('找不到這個房間,請確認代碼是否正確。'); return; }
+  const ns=snap.val();
+  if(ns.status!=='lobby'){ showNotice('這個房間的遊戲已經開始了,無法加入。'); return; }
+  if(ns.players.length>=4){ showNotice('房間已滿(最多 4 人)。'); return; }
+  if(ns.players.some(p=>p.name===name)){ showNotice('這個名字已經有人用了,換一個吧。'); return; }
+  const id=genId();
+  ns.players.push({id,name,tokens:0,alive:true,protected:false,hand:[],discardPile:[],isBot:false});
+  try{
+    await db.ref('rooms/'+code).set(ns);
+  }catch(e){
+    showNotice('加入房間失敗:'+errMsg(e));
+    return;
+  }
+  myId=id; myName=name; roomCode=code; state=ns; render();
+  subscribeRoom(code);
+  try{ localStorage.setItem('loveletter_session', JSON.stringify({roomCode:code,myId:id,myName:name})); }catch(e){}
+  try{ localStorage.setItem('loveletter_name', name); }catch(e){}
+}
+const BOT_NAMES=['電腦對手・甲','電腦對手・乙','電腦對手・丙'];
+async function doAddBot(){
+  if(!state || state.players.length>=4) return;
+  const ns=clone(state);
+  const botCount=ns.players.filter(p=>p.isBot).length;
+  const id='bot-'+genId();
+  ns.players.push({id,name:BOT_NAMES[botCount]||('電腦對手 '+(botCount+1)),tokens:0,alive:true,protected:false,hand:[],discardPile:[],isBot:true});
+  saveState(ns);
+}
+async function doRemoveBot(id){
+  if(!state) return;
+  const ns=clone(state);
+  ns.players=ns.players.filter(p=>p.id!==id);
+  saveState(ns);
+}
+async function doLeaveRoom(){
+  try{ localStorage.removeItem('loveletter_session'); }catch(e){}
+  unsubscribeRoom();
+  roomCode=null; myId=null; state=null;
+  localUI={stage:null,selectedCard:null,targetId:null,guess:null};
+  render();
+}
+function enterCountdown(ns){
+  ns.status='countdown';
+  ns.countdownEndAt=Date.now()+3000;
+  saveState(ns);
+}
+async function doStartGame(){
+  if(!state||state.players.length<2) return;
+  const ns=clone(state);
+  ns.tokenGoal = ns.players.length===2?7:(ns.players.length===3?5:4);
+  ns.roundNumber=1;
+  ns.players.forEach(p=>p.tokens=0);
+  enterCountdown(ns);
+}
+async function doNextRound(){
+  const ns=clone(state);
+  ns.roundNumber+=1;
+  enterCountdown(ns);
+}
+async function doPlayAgain(){
+  const ns=clone(state);
+  ns.players.forEach(p=>p.tokens=0);
+  ns.tokenGoal = ns.players.length===2?7:(ns.players.length===3?5:4);
+  ns.roundNumber=1;
+  ns.championIds=[];
+  enterCountdown(ns);
+}
+async function doResetGame(){
+  if(!state || state.hostId!==myId) return;
+  const ns=clone(state);
+  ns.players.forEach(p=>p.tokens=0);
+  ns.tokenGoal = ns.players.length===2?7:(ns.players.length===3?5:4);
+  ns.roundNumber=1;
+  ns.championIds=[];
+  enterCountdown(ns);
+}
+let countdownLock=false;
+function checkCountdownFinish(){
+  if(!state || state.status!=='countdown') return;
+  if(!state.hostId || state.hostId!==myId) return;
+  if(Date.now() < state.countdownEndAt) return;
+  if(countdownLock) return;
+  countdownLock=true;
+  const ns=clone(state);
+  startRound(ns);
+  saveState(ns);
+  setTimeout(()=>{countdownLock=false;}, 1500);
+}
+setInterval(()=>{ if(state && state.status==='countdown') render(); }, 350);
 
-  return(
-    <div className="page">
-      <div className="card">
-        <div className="card-header"><h3>🌐 ACT — 自動會話翻譯</h3></div>
-        <div className="card-body">
-          <p style={{fontSize:13,color:'#718096',marginBottom:16}}>
-            支援國語、英語、客語、台語互譯，協助護士與不同語言背景的病人溝通。
-          </p>
-          <div className="fg"><label>輸入中文</label>
-            <div style={{display:'flex',gap:8}}>
-              <input value={input} onChange={e=>setInput(e.target.value)} placeholder="例：你好 / 請問您有哪裡不舒服？"
-                onKeyDown={e=>e.key==='Enter'&&translate()}/>
-              <button className="btn btn-primary" onClick={translate}>翻譯</button>
-            </div>
-          </div>
-          <div className="act-langs">
-            {langs.map(l=>(
-              <div key={l.id} className={`act-lang-btn${lang===l.id?' active':''}`} onClick={()=>setLang(l.id)}>{l.label}</div>
-            ))}
-          </div>
-          {result&&<div className="act-result">{result}</div>}
-          <div style={{marginTop:16}}>
-            <p style={{fontSize:12,color:'#a0aec0',marginBottom:8}}>常用例句（點擊快速翻譯）：</p>
-            <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-              {Object.keys(ACT_DICT).map(k=>(
-                <span key={k} style={{background:'#edf2f7',padding:'3px 10px',borderRadius:6,fontSize:12,cursor:'pointer',color:'#4a5568'}}
-                  onClick={()=>{setInput(k);setResult(ACT_DICT[k][lang]||'（無對應）')}}>{k}</span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+/* ---------------- Turn actions ---------------- */
+function myPlayer(){ return state.players.find(p=>p.id===myId); }
+function findP(id){ return state.players.find(p=>p.id===id); }
+
+function doDraw(){
+  if(localUI.stage) return;
+  const deck=[...state.deck];
+  const drawn=deck.pop();
+  localUI.stage={deck, drawnCard:drawn};
+  render();
+}
+function tempHand(){
+  const me=myPlayer();
+  if(!localUI.stage) return me.hand.slice();
+  return me.hand.concat([localUI.stage.drawnCard]);
+}
+function forcedCountess(){
+  const th=tempHand();
+  return th.includes(7) && (th.includes(6)||th.includes(5));
+}
+function selectCard(v){
+  if(forcedCountess() && v!==7){
+    showNotice('你同時持有伯爵夫人與國王/王子,必須棄掉伯爵夫人。');
+    return;
+  }
+  localUI.selectedCard=v; localUI.targetId=null; localUI.guess=null;
+  render();
+}
+function cancelSelection(){
+  localUI.selectedCard=null; localUI.targetId=null; localUI.guess=null;
+  render();
+}
+function selectTarget(id){ localUI.targetId=id; render(); }
+function selectGuess(n){ localUI.guess=n; render(); }
+
+function computeValidTargets(card){
+  if(card===5){
+    return state.players.filter(p=>p.alive && (p.id===myId || !p.protected));
+  }
+  if([1,2,3,6].includes(card)){
+    return state.players.filter(p=>p.alive && !p.protected && p.id!==myId);
+  }
+  return [];
 }
 
-// ── AMD: Auto Medication Dispatch ──
-function AMD({onAddASR}){
-  const [meds,setMeds]=useState(MEDS);
-  const [form,setForm]=useState({patient:'',med:'',qty:1});
+function confirmPlay(){
+  const card=localUI.selectedCard;
+  if(!card) return;
+  const needsTarget=[1,2,3,5,6].includes(card);
+  const targets=computeValidTargets(card);
+  if(needsTarget && targets.length>0){
+    if(localUI.targetId==null){ showNotice('請先選擇目標'); return; }
+    if(card===1 && localUI.guess==null){ showNotice('請選擇你要猜測的牌'); return; }
+  }
+  const ns=clone(state);
+  ns.deck=[...localUI.stage.deck];
+  const me=ns.players.find(p=>p.id===myId);
+  const th=me.hand.concat([localUI.stage.drawnCard]);
+  const idx=th.indexOf(card);
+  th.splice(idx,1);
+  me.hand=th;
+  me.discardPile.push(card);
+  ns.log.push(`${me.name} 出了「${cardName(card)}」。`);
 
-  const advance=id=>{
-    setMeds(m=>m.map(x=>x.id===id&&x.status<4?{...x,status:x.status+1}:x));
-    const med=meds.find(x=>x.id===id);
-    if(med)onAddASR(`[AMD] ${med.name} 配送進度更新：${AMD_STEPS[Math.min(med.status+1,4)]}`);
-  };
-
-  const add=()=>{
-    if(!form.patient||!form.med)return;
-    const newMed={id:`M${Date.now()}`,name:form.med,patient:form.patient,qty:form.qty,status:0};
-    setMeds(m=>[...m,newMed]);
-    onAddASR(`[AMD] 新增藥物配送：${form.med} → ${form.patient}`);
-    setForm({patient:'',med:'',qty:1});
-  };
-
-  return(
-    <div className="page">
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
-        <div className="card">
-          <div className="card-header"><h3>💊 AMD — 新增配送單</h3></div>
-          <div className="card-body">
-            <div className="fg"><label>病人</label>
-              <select value={form.patient} onChange={e=>setForm(f=>({...f,patient:e.target.value}))}>
-                <option value=''>選擇病人</option>
-                {PATIENTS.map(p=><option key={p.id} value={p.name}>{p.name}（{p.ward}）</option>)}
-              </select>
-            </div>
-            <div className="fg"><label>藥物名稱</label>
-              <input value={form.med} onChange={e=>setForm(f=>({...f,med:e.target.value}))} placeholder="例：Aspirin 100mg"/>
-            </div>
-            <div className="fg"><label>數量</label>
-              <input type="number" min={1} value={form.qty} onChange={e=>setForm(f=>({...f,qty:+e.target.value}))}/>
-            </div>
-            <button className="btn btn-primary" onClick={add}>📦 建立配送單</button>
-          </div>
-        </div>
-        <div className="card">
-          <div className="card-header"><h3>🚚 配送狀態追蹤</h3></div>
-          <div className="card-body" style={{padding:0}}>
-            <table className="tbl"><thead><tr><th>藥物</th><th>病人</th><th>進度</th><th>操作</th></tr></thead>
-            <tbody>{meds.map(m=>(
-              <tr key={m.id}>
-                <td style={{fontWeight:600}}>{m.name}</td>
-                <td>{m.patient}</td>
-                <td>
-                  <div className="amd-track">
-                    {AMD_STEPS.map((s,i)=>[
-                      i>0&&<div key={`l${i}`} className={`amd-line${i<=m.status?' done':''}`}/>,
-                      <div key={`s${i}`} className="amd-step" style={{flex:'0 0 auto'}}>
-                        <div className={`amd-dot${i<m.status?' done':i===m.status?' active':''}`}>
-                          {i<m.status?'✓':i+1}
-                        </div>
-                      </div>
-                    ])}
-                  </div>
-                  <div style={{fontSize:11,color:m.status===4?'#276749':'#718096',textAlign:'center'}}>{AMD_STEPS[m.status]}</div>
-                </td>
-                <td>{m.status<4&&<button className="btn btn-primary btn-sm" onClick={()=>advance(m.id)}>→ 下一步</button>}</td>
-              </tr>
-            ))}</tbody></table>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  resolveEffect(ns, me, card, localUI.targetId, localUI.guess, true);
+  finalizeTurnOrRoundEnd(ns);
+  localUI={stage:null,selectedCard:null,targetId:null,guess:null};
+  saveState(ns);
 }
 
-// ── App ──
-function App(){
-  const [user,setUser]=useState(null);
-  const [page,setPage]=useState('dashboard');
-  const [selPat,setSelPat]=useState(null);
-  const [history,setHistory]=useState([]);
-  const [asrLogs,setAsrLogs]=useState([]);
-  const [toast,setToast]=useState('');
-
-  const showToast=msg=>{setToast(msg);setTimeout(()=>setToast(''),2400)};
-  const addASR=text=>{
-    const t=new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-    setAsrLogs(l=>[...l,{text,time:t}]);
-  };
-  const saveHistory=rec=>{setHistory(h=>[...h,rec]);showToast(`已儲存 ${rec.patientName} 的評估結果`);};
-
-  if(!user)return <Login onLogin={u=>{setUser(u);showToast(`歡迎，${u.name}！`)}}/>;
-
-  const nav=[
-    {section:'1.3 核心功能'},
-    {id:'dashboard',icon:'🏠',label:'首頁總覽'},
-    {id:'patients',icon:'👥',label:'病人查詢'},
-    {id:'history',icon:'📋',label:'評估歷史'},
-    {section:'1.4 Extra Functions'},
-    {id:'dt',icon:'🤖',label:'DT 數位分身'},
-    {id:'asr',icon:'💬',label:'ASR 服務紀錄'},
-    {id:'anns',icon:'🧠',label:'ANNS AI摘要'},
-    {id:'act',icon:'🌐',label:'ACT 多語翻譯'},
-    {id:'amd',icon:'💊',label:'AMD 藥物配送'},
-  ];
-
-  const titles={dashboard:'首頁總覽',patients:selPat?`DURA — ${selPat.name}`:'病人查詢',
-    history:'評估歷史',dt:'Digital Twins',asr:'Auto Service Record',
-    anns:'Auto Nurse Notes Summary',act:'Auto Conversion Translation',amd:'Auto Medication Dispatch'};
-
-  return(
-    <div className="app">
-      <div className="sidebar">
-        <div className="sidebar-logo"><h2>NNS 護理系統</h2><p>HEPS / DURA 子系統 v2</p></div>
-        <div className="sidebar-nav">
-          {nav.map((n,i)=>n.section
-            ?<div key={i} className="sidebar-section">{n.section}</div>
-            :<div key={n.id} className={`nav-item${page===n.id?' active':''}`}
-              onClick={()=>{setPage(n.id);if(n.id!=='patients')setSelPat(null)}}>
-              <span className="nav-icon">{n.icon}</span>{n.label}
-            </div>
-          )}
-        </div>
-        <div className="sidebar-footer">
-          {user.name}　{user.id}<br/>
-          <span style={{cursor:'pointer',color:'#90cdf4'}} onClick={()=>setUser(null)}>登出</span>
-        </div>
-      </div>
-      <div className="main">
-        <div className="topbar">
-          <span className="topbar-title">{titles[page]}</span>
-          <div className="topbar-right">
-            <span className="badge badge-blue">內科病房</span>
-            <span>{new Date().toLocaleDateString('zh-TW')}</span>
-          </div>
-        </div>
-        <div className="content">
-          {page==='dashboard'&&<Dashboard history={history} asrLogs={asrLogs}/>}
-          {page==='patients'&&!selPat&&<PatientList onSelect={p=>setSelPat(p)}/>}
-          {page==='patients'&&selPat&&<DURAForm patient={selPat} onSave={saveHistory} onCancel={()=>setSelPat(null)} onAddASR={addASR}/>}
-          {page==='history'&&<History history={history}/>}
-          {page==='dt'&&<DigitalTwins onAddASR={addASR}/>}
-          {page==='asr'&&<AutoServiceRecord asrLogs={asrLogs} onAddASR={addASR}/>}
-          {page==='anns'&&<ANNS history={history} asrLogs={asrLogs}/>}
-          {page==='act'&&<ACT/>}
-          {page==='amd'&&<AMD onAddASR={addASR}/>}
-        </div>
-      </div>
-      {toast&&<Toast msg={toast} onDone={()=>setToast('')}/>}
-    </div>
-  );
+/* Shared effect resolver used by both human plays and bot turns.
+   `actor` must already have had the played card removed from hand
+   (and pushed to discardPile) before this is called. */
+function resolveEffect(ns, actor, card, tId, guess, isHumanReveal){
+  switch(card){
+    case 1:{
+      const t = tId!=null ? ns.players.find(p=>p.id===tId) : null;
+      if(t){
+        if(t.hand[0]===guess){
+          t.alive=false;
+          ns.log.push(`${actor.name} 猜測 ${t.name} 持有「${cardName(guess)}」,猜中了!${t.name} 出局。`);
+        }else{
+          ns.log.push(`${actor.name} 猜測 ${t.name} 持有「${cardName(guess)}」,猜錯了。`);
+        }
+      }else{
+        ns.log.push('沒有可指定的目標,衛兵效果無效。');
+      }
+      break;
+    }
+    case 2:{
+      const t = tId!=null ? ns.players.find(p=>p.id===tId) : null;
+      if(t){
+        ns.log.push(`${actor.name} 偷看了 ${t.name} 的手牌。`);
+        if(isHumanReveal){
+          showNotice(`你偷看到 ${t.name} 的手牌是:「${cardRoman(t.hand[0])} ${cardName(t.hand[0])}」`, '神父 · 偷看手牌');
+        }
+      }else{
+        ns.log.push('沒有可指定的目標,神父效果無效。');
+      }
+      break;
+    }
+    case 3:{
+      const t = tId!=null ? ns.players.find(p=>p.id===tId) : null;
+      if(t){
+        const myVal=actor.hand[0], tVal=t.hand[0];
+        if(myVal===tVal){
+          ns.log.push(`${actor.name} 與 ${t.name} 比較手牌,點數相同(「${cardName(myVal)}」),平手無事發生。`);
+        }else if(myVal>tVal){
+          t.alive=false;
+          ns.log.push(`${actor.name}(「${cardName(myVal)}」)與 ${t.name}(「${cardName(tVal)}」)比較手牌,${t.name} 出局。`);
+        }else{
+          actor.alive=false;
+          ns.log.push(`${actor.name}(「${cardName(myVal)}」)與 ${t.name}(「${cardName(tVal)}」)比較手牌,${actor.name} 出局。`);
+        }
+      }else{
+        ns.log.push('沒有可指定的目標,男爵效果無效。');
+      }
+      break;
+    }
+    case 4:{
+      actor.protected=true;
+      ns.log.push(`${actor.name} 使用侍女,獲得保護,直到下一回合開始前都不會被指定。`);
+      break;
+    }
+    case 5:{
+      const t = tId!=null ? ns.players.find(p=>p.id===tId) : null;
+      if(t){
+        if(t.hand[0]===8){
+          t.alive=false; t.discardPile.push(8); t.hand=[];
+          ns.log.push(`${actor.name} 指定 ${t.name} 使用王子,${t.name} 被迫棄掉公主,立即出局!`);
+        }else{
+          const old=t.hand.pop();
+          if(old!==undefined) t.discardPile.push(old);
+          let newCard;
+          if(ns.deck.length>0){ newCard=ns.deck.pop(); }
+          else{ newCard=ns.removedCard; ns.removedCard=null; }
+          t.hand=[newCard];
+          ns.log.push(`${actor.name} 指定 ${t.name} 使用王子,棄掉手牌並重新抽了一張新牌。`);
+        }
+      }
+      break;
+    }
+    case 6:{
+      const t = tId!=null ? ns.players.find(p=>p.id===tId) : null;
+      if(t){
+        const tmp=actor.hand[0]; actor.hand[0]=t.hand[0]; t.hand[0]=tmp;
+        ns.log.push(`${actor.name} 與 ${t.name} 交換了手牌。`);
+      }else{
+        ns.log.push('沒有可指定的目標,國王效果無效。');
+      }
+      break;
+    }
+    case 7:{
+      ns.log.push(`${actor.name} 棄掉了伯爵夫人。`);
+      break;
+    }
+    case 8:{
+      actor.alive=false;
+      ns.log.push(`${actor.name} 棄掉了公主,立即出局!`);
+      break;
+    }
+  }
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+function finalizeTurnOrRoundEnd(ns){
+  const alivePlayers=ns.players.filter(p=>p.alive);
+  if(alivePlayers.length<=1){
+    endRound(ns, alivePlayers);
+    return;
+  }
+  const order=ns.players;
+  let idx=order.findIndex(p=>p.id===ns.currentPlayerId);
+  let next=idx;
+  do{ next=(next+1)%order.length; }while(!order[next].alive);
+  order[next].protected=false;
+  ns.currentPlayerId=order[next].id;
+  if(ns.deck.length===0){
+    endRound(ns, ns.players.filter(p=>p.alive));
+    return;
+  }
+  ns.status='playing';
+}
+
+function endRound(ns, aliveList){
+  let winners;
+  if(aliveList.length<=1){
+    winners=aliveList.slice();
+  }else{
+    const maxVal=Math.max(...aliveList.map(p=>p.hand[0]));
+    let candidates=aliveList.filter(p=>p.hand[0]===maxVal);
+    if(candidates.length===1){
+      winners=candidates;
+    }else{
+      const maxSum=Math.max(...candidates.map(p=>sumArr(p.discardPile)));
+      winners=candidates.filter(p=>sumArr(p.discardPile)===maxSum);
+    }
+  }
+  winners.forEach(w=>{
+    const p=ns.players.find(pp=>pp.id===w.id);
+    p.tokens+=1;
+  });
+  ns.status='roundEnd';
+  ns.roundWinners=winners.map(w=>w.id);
+  ns.log.push(`本輪結束。${winners.map(w=>w.name).join('、')} 獲得一枚信物。`);
+  const champs=ns.players.filter(p=>p.tokens>=ns.tokenGoal);
+  if(champs.length>0){
+    ns.status='gameOver';
+    ns.championIds=champs.map(c=>c.id);
+  }
+}
+
+/* ---------------- Bot AI ---------------- */
+let botLock=false;
+function maybeRunBot(){
+  if(!state || state.status!=='playing') return;
+  if(!state.hostId || state.hostId!==myId) return; // only the host's browser drives bots
+  const cur=findP(state.currentPlayerId);
+  if(!cur || !cur.isBot || !cur.alive) return;
+  if(botLock) return;
+  botLock=true;
+  setTimeout(()=>{ botLock=false; runBotTurn(); }, 3200);
+}
+function runBotTurn(){
+  if(!state || state.status!=='playing') return;
+  const curCheck=findP(state.currentPlayerId);
+  if(!curCheck || !curCheck.isBot || !curCheck.alive) return;
+  const ns=clone(state);
+  const bot=ns.players.find(p=>p.id===ns.currentPlayerId);
+  if(ns.deck.length===0){
+    endRound(ns, ns.players.filter(p=>p.alive));
+    saveState(ns);
+    return;
+  }
+  const drawn=ns.deck.pop();
+  let hand=bot.hand.concat([drawn]);
+
+  const forced = hand.includes(7) && (hand.includes(6)||hand.includes(5));
+  let card;
+  if(forced){
+    card=7;
+  }else{
+    let candidates=hand.slice();
+    if(candidates.includes(8) && candidates.length>1){
+      candidates=candidates.filter(c=>c!==8);
+    }
+    card=candidates[Math.floor(Math.random()*candidates.length)];
+  }
+  const idx=hand.indexOf(card);
+  hand.splice(idx,1);
+  bot.hand=hand;
+  bot.discardPile.push(card);
+  ns.log.push(`${bot.name} 出了「${cardName(card)}」。`);
+
+  function targetsFor(c){
+    if(c===5) return ns.players.filter(p=>p.alive && (p.id===bot.id || !p.protected));
+    if([1,2,3,6].includes(c)) return ns.players.filter(p=>p.alive && !p.protected && p.id!==bot.id);
+    return [];
+  }
+  let tId=null, guess=null;
+  if([1,2,3,5,6].includes(card)){
+    const targets=targetsFor(card);
+    if(card===5){
+      const others=targets.filter(t=>t.id!==bot.id);
+      const pick = others.length>0 ? others[Math.floor(Math.random()*others.length)] : targets[0];
+      tId = pick ? pick.id : null;
+    }else if(targets.length>0){
+      tId = targets[Math.floor(Math.random()*targets.length)].id;
+    }
+    if(card===1 && tId!=null){
+      const opts=[2,3,4,5,6,7,8];
+      guess=opts[Math.floor(Math.random()*opts.length)];
+    }
+  }
+
+  resolveEffect(ns, bot, card, tId, guess, false);
+  finalizeTurnOrRoundEnd(ns);
+  saveState(ns);
+}
+
+
+function toggleRules(){ rulesOpen=!rulesOpen; render(); }
+
+function renderNoticeModal(){
+  return `<div class="modal-overlay" style="z-index:80;">
+    <div class="modal-box">
+      <h3>${escapeHtml(notice.title)}</h3>
+      <p style="font-size:15px;line-height:1.6;">${escapeHtml(notice.body)}</p>
+      <div class="btn full mt14" onclick="closeNotice()">知道了</div>
+    </div>
+  </div>`;
+}
+
+/* ---------------- Render ---------------- */
+function render(){
+  const app=document.getElementById('app');
+  let html='';
+  html+=`<div class="glow-wrap"><div class="glow"></div><h1 class="title display">命運情書</h1><div class="subtitle">Love Letter · 與朋友共寫的賭局</div></div>`;
+
+  if(!FIREBASE_READY){
+    html+=`<div class="panel">
+      <h2>還差一步:設定 Firebase</h2>
+      <p class="hint">這個頁面需要連到你自己的 Firebase Realtime Database 才能讓不同裝置同步房間狀態。打開這個 HTML 檔案,找到最上面的 <code>FIREBASE_CONFIG</code>,把裡面的 <code>REPLACE_ME</code> 換成你 Firebase 專案的設定值,存檔後重新整理這個頁面就可以了。</p>
+    </div>`;
+    app.innerHTML=html;
+    return;
+  }
+
+  if(!roomCode || !state){
+    html+=renderHome();
+  }else if(state.status==='lobby'){
+    html+=renderLobby();
+  }else if(state.status==='countdown'){
+    html+=renderCountdown();
+  }else if(state.status==='playing'){
+    html+=renderPlaying();
+  }else if(state.status==='roundEnd'){
+    html+=renderRoundEnd();
+  }else if(state.status==='gameOver'){
+    html+=renderGameOver();
+  }
+
+  if(rulesOpen) html+=renderRulesModal();
+  if(roomMenuOpen) html+=renderRoomMenu();
+  if(notice) html+=renderNoticeModal();
+  app.innerHTML=html;
+
+  const ni=document.getElementById('nameInput');
+  if(ni && myName) ni.value=myName;
+  const leaveLink=document.getElementById('leaveLink');
+  if(leaveLink) leaveLink.style.display = roomCode ? 'block' : 'none';
+
+  maybeRunBot();
+  checkCountdownFinish();
+}
+
+function renderCountdown(){
+  const remaining=Math.max(0, Math.ceil((state.countdownEndAt-Date.now())/1000));
+  return `<div class="panel center-text">
+    <h2 style="border:none;">即將開始</h2>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:64px;color:var(--gold-light);margin:6px 0;">${remaining>0?remaining:'開始!'}</div>
+    <div class="hint">準備好你的措辭,信箋即將送出…</div>
+  </div>`;
+}
+
+function renderHome(){
+  return `
+  <div class="panel">
+    <h2>展開新的信箋</h2>
+    <label>你的名字</label>
+    <input type="text" id="nameInput" placeholder="例如:夜風" maxlength="12">
+    <div class="btn-row">
+      <div class="btn full" onclick="doCreateRoom()">建立房間</div>
+    </div>
+    <div class="hint">建立後會得到一個 4 碼房間代碼,分享給朋友讓他們加入。</div>
+  </div>
+  <div class="panel">
+    <h2>加入朋友的房間</h2>
+    <label>房間代碼</label>
+    <input type="text" id="joinCodeInput" placeholder="輸入 4 碼代碼" maxlength="4" style="text-transform:uppercase;">
+    <div class="btn-row">
+      <div class="btn full secondary" onclick="doJoinRoom()" style="border:1px solid var(--gold-deep);">加入房間</div>
+    </div>
+  </div>
+  <div class="hint center-text">支援 2~4 人,真人與電腦對手可以混搭——建好房間後到等候室加電腦對手就行。</div>
+  `;
+}
+
+function renderLobby(){
+  const isHost=state.hostId===myId;
+  const botCount=state.players.filter(p=>p.isBot).length;
+  const humanCount=state.players.length-botCount;
+  let rows=state.players.map(p=>`
+    <div class="player-row">
+      <span>${escapeHtml(p.name)}${p.id===state.hostId?'<span class="tag host">房主</span>':''}${p.isBot?'<span class="tag prot">AI</span>':''}</span>
+      <span style="opacity:.7;font-size:12px;">${p.isBot && isHost ? `<span class="btn secondary" style="padding:4px 10px;font-size:11px;" onclick="doRemoveBot('${p.id}')">移除</span>` : '已加入'}</span>
+    </div>`).join('');
+  return `
+  <div class="panel">
+    <h2>等候室</h2>
+    <div class="room-code">${roomCode}</div>
+    <div class="hint center-text mt8">把代碼分享給朋友,讓他們在「加入房間」輸入;也可以直接加電腦對手一個人玩。</div>
+    <div class="mt14">${rows}</div>
+    ${isHost && state.players.length<4 ? `<div class="btn-row mt8"><div class="btn secondary" onclick="doAddBot()">新增電腦對手</div></div>` : ''}
+    <div class="mt14">
+      ${isHost
+        ? (state.players.length>=2
+            ? `<div class="btn full" onclick="doStartGame()">開始遊戲</div>`
+            : `<div class="hint center-text">至少需要 2 人(含電腦對手)才能開始。</div>`)
+        : `<div class="hint center-text">等待房主開始遊戲…</div>`}
+    </div>
+    <div class="mt8 center-text"><span class="btn secondary" onclick="doLeaveRoom()">離開房間</span></div>
+  </div>`;
+}
+
+function renderPlayerBoard(){
+  let rows=state.players.map(p=>{
+    let cls='player-row';
+    if(p.id===state.currentPlayerId) cls+=' active';
+    if(!p.alive) cls+=' dead';
+    let tags='';
+    if(p.id===state.currentPlayerId) tags+='<span class="tag turn">行動中</span>';
+    if(p.isBot) tags+='<span class="tag prot" style="background:#3a3a55;color:#dde0ff;">AI</span>';
+    if(p.protected) tags+='<span class="tag prot">受保護</span>';
+    if(p.id===state.hostId) tags+='<span class="tag host">房主</span>';
+    let dots='';
+    for(let i=0;i<p.tokens;i++) dots+='<span class="token-dot"></span>';
+    return `<div class="${cls}">
+      <span>${escapeHtml(p.name)}${tags}</span>
+      <span class="tokens">${dots}</span>
+    </div>`;
+  }).join('');
+  return `<div class="panel"><h2>牌桌</h2>${rows}
+    <div class="hint mt8">牌堆剩餘:${state.deck.length} 張${state.faceUpRemoved.length?(' ・ 公開移除:'+state.faceUpRemoved.map(v=>cardRoman(v)).join('、')):''}</div>
+  </div>`;
+}
+
+function renderDiscards(){
+  let html='<div class="panel"><h2>棄牌</h2>';
+  state.players.forEach(p=>{
+    html+=`<div style="margin-bottom:6px;"><div style="font-size:12px;opacity:.8;margin-bottom:3px;">${escapeHtml(p.name)}</div><div class="discard-row">`;
+    if(p.discardPile.length===0) html+='<span style="font-size:12px;opacity:.5;">(尚未棄牌)</span>';
+    p.discardPile.forEach(v=>{ html+=`<span class="small-card">${cardRoman(v)}</span>`; });
+    html+='</div></div>';
+  });
+  html+='</div>';
+  return html;
+}
+
+function renderLog(){
+  const items=state.log.slice(-30).reverse().map(l=>`<div>${escapeHtml(l)}</div>`).join('');
+  return `<div class="panel"><h2>信箋紀事</h2><div class="log-box">${items}</div></div>`;
+}
+
+function renderHighlight(){
+  if(!state.log || state.log.length===0) return '';
+  const recent=state.log.slice(-4).reverse(); // newest first
+  const opacities=[1, 0.8, 0.6, 0.42];
+  const rows=recent.map((l,i)=>{
+    const op=opacities[i] ?? 0.4;
+    const size=i===0?'15px':'13px';
+    const top=i===0?'0':'7px';
+    const border=i===0?'':'border-top:1px dashed rgba(201,164,80,0.18);padding-top:6px;';
+    return `<div style="opacity:${op};font-size:${size};margin-top:${top};${border}">${escapeHtml(l)}</div>`;
+  }).join('');
+  return `<div class="highlight-banner">
+    <div class="eyebrow">最新動態</div>
+    ${rows}
+  </div>`;
+}
+
+function renderPlaying(){
+  const me=myPlayer();
+  const myTurn=state.currentPlayerId===myId;
+  let html=renderPlayerBoard();
+  html+=renderHighlight();
+
+  if(!me){
+    html+='<div class="panel center-text">你不在這場遊戲中。</div>';
+    return html+renderLog();
+  }
+
+  if(!me.alive){
+    html+=`<div class="panel center-text">你已出局,先靜靜旁觀這一輪吧。</div>`;
+  }else if(myTurn){
+    html+=renderMyTurn(me);
+  }else{
+    const cur=findP(state.currentPlayerId);
+    html+=`<div class="panel center-text">等待 <b>${escapeHtml(cur?cur.name:'')}</b> 行動…</div>`;
+  }
+
+  if(me.alive && me.hand.length && !localUI.stage){
+    html+=`<div class="panel"><h2>你的手牌</h2>
+      <div class="cards-row">
+        <div class="card">
+          <div class="roman display">${cardRoman(me.hand[0])}</div>
+          <div class="cname">${cardName(me.hand[0])}</div>
+          <div class="cdesc">${cardDesc(me.hand[0])}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  html+=renderDiscards();
+  html+=renderLog();
+  return html;
+}
+
+function renderMyTurn(me){
+  if(!localUI.stage){
+    return `<div class="panel center-text">
+      <div>輪到你了。</div>
+      <div class="seal-wrap"><div class="seal" onclick="doDraw()"><span>抽牌</span><small>DRAW</small></div></div>
+    </div>`;
+  }
+  const th=tempHand();
+  let html=`<div class="panel"><h2>選一張出牌</h2>`;
+  if(forcedCountess()) html+=`<div class="hint">你同時持有伯爵夫人與國王/王子,必須棄掉伯爵夫人。</div>`;
+  html+=`<div class="cards-row">`;
+  th.forEach(v=>{
+    const locked=forcedCountess() && v!==7;
+    const sel=localUI.selectedCard===v?' selected':'';
+    html+=`<div class="card${sel}${locked?' locked':''}" onclick="${locked?'':'selectCard('+v+')'}">
+      <div class="roman display">${cardRoman(v)}</div>
+      <div class="cname">${cardName(v)}</div>
+      <div class="cdesc">${cardDesc(v)}</div>
+    </div>`;
+  });
+  html+=`</div>`;
+
+  if(localUI.selectedCard!=null){
+    const card=localUI.selectedCard;
+    const needsTarget=[1,2,3,5,6].includes(card);
+    const targets=computeValidTargets(card);
+    if(needsTarget){
+      if(targets.length===0){
+        html+=`<div class="hint mt8">目前沒有可指定的目標,這個效果將會無效。</div>`;
+      }else{
+        html+=`<div class="hint mt8">選擇目標:</div><div class="target-grid">`;
+        targets.forEach(t=>{
+          const sel=localUI.targetId===t.id?' sel':'';
+          html+=`<div class="pill${sel}" onclick="selectTarget('${t.id}')">${escapeHtml(t.name)}${t.id===myId?'(自己)':''}</div>`;
+        });
+        html+=`</div>`;
+        if(card===1 && localUI.targetId!=null){
+          html+=`<div class="hint">猜測對方手牌:</div><div class="guess-grid">`;
+          for(let n=2;n<=8;n++){
+            const sel=localUI.guess===n?' sel':'';
+            html+=`<div class="guess-pill${sel}" onclick="selectGuess(${n})">${cardRoman(n)} ${cardName(n)}</div>`;
+          }
+          html+=`</div>`;
+        }
+      }
+    }
+    const canConfirm = !needsTarget || targets.length===0 || (localUI.targetId!=null && (card!==1 || localUI.guess!=null));
+    html+=`<div class="btn-row mt14">
+      <div class="btn secondary" onclick="cancelSelection()">重新選擇</div>
+      <div class="btn${canConfirm?'':' disabled'}" onclick="${canConfirm?'confirmPlay()':''}">確認出牌</div>
+    </div>`;
+  }
+  html+=`</div>`;
+  return html;
+}
+
+function renderRoundEnd(){
+  const winners=state.roundWinners.map(id=>findP(id)).filter(Boolean);
+  const isHost=state.hostId===myId;
+  let html=`<div class="panel center-text">
+    <h2 style="border:none;">本輪結算</h2>
+    <div style="color:var(--gold-light);font-size:18px;margin-bottom:8px;">${winners.map(w=>escapeHtml(w.name)).join('、')} 獲得一枚信物</div>
+  </div>`;
+  html+=`<div class="panel"><h2>各位的手牌</h2>`;
+  state.players.forEach(p=>{
+    html+=`<div class="player-row"><span>${escapeHtml(p.name)}${!p.alive?'(已出局)':''}</span><span>${p.hand.length?cardRoman(p.hand[0])+' '+cardName(p.hand[0]):'—'}</span></div>`;
+  });
+  html+=`</div>`;
+  html+=renderPlayerBoard();
+  html+=`<div class="panel center-text">
+    ${isHost?`<div class="btn full" onclick="doNextRound()">下一輪</div>`:`<div class="hint">等待房主開始下一輪…</div>`}
+  </div>`;
+  html+=renderLog();
+  return html;
+}
+
+function renderGameOver(){
+  const champs=state.championIds.map(id=>findP(id)).filter(Boolean);
+  const isHost=state.hostId===myId;
+  let html=`<div class="panel">
+    <div class="champion-banner">${champs.map(c=>escapeHtml(c.name)).join('、')} 贏得了這場賭局</div>
+  </div>`;
+  html+=`<div class="panel"><h2>最終信物數</h2>`;
+  state.players.slice().sort((a,b)=>b.tokens-a.tokens).forEach(p=>{
+    let dots=''; for(let i=0;i<p.tokens;i++) dots+='<span class="token-dot"></span>';
+    html+=`<div class="player-row"><span>${escapeHtml(p.name)}</span><span class="tokens">${dots}</span></div>`;
+  });
+  html+=`</div>`;
+  html+=`<div class="panel center-text">
+    ${isHost?`<div class="btn full" onclick="doPlayAgain()">重新開始</div>`:`<div class="hint">等待房主重新開始…</div>`}
+    <div class="mt8"><span class="btn secondary" onclick="doLeaveRoom()">離開房間</span></div>
+  </div>`;
+  return html;
+}
+
+function renderRoomMenu(){
+  const isHost = state && state.hostId===myId;
+  const canReset = state && ['playing','roundEnd','gameOver'].includes(state.status);
+  return `<div class="modal-overlay" onclick="if(event.target===this) toggleRoomMenu()">
+    <div class="modal-box">
+      <h3>房間選項</h3>
+      ${roomCode?`<p class="hint">目前房間代碼:${escapeHtml(roomCode)}</p>`:''}
+      ${isHost && canReset ? `<div class="btn full mt8" onclick="toggleRoomMenu();doResetGame();">重新開始整局</div>` : ''}
+      <div class="btn full secondary mt8" onclick="toggleRoomMenu();doLeaveRoom();">離開房間</div>
+      <div class="btn full secondary mt8" onclick="toggleRoomMenu()">取消</div>
+    </div>
+  </div>`;
+}
+function renderRulesModal(){
+  let items='';
+  for(let v=1;v<=8;v++){
+    items+=`<div class="rule-item"><b>${cardRoman(v)} ${cardName(v)}</b>（${CARDS[v].count} 張）<br>${cardDesc(v)}</div>`;
+  }
+  return `<div class="modal-overlay" onclick="if(event.target===this) toggleRules()">
+    <div class="modal-box">
+      <h3>遊戲規則</h3>
+      <p style="font-size:13px;">目標:在每輪結束時存活,或手牌點數最高,就能贏得一枚信物。先集滿信物的人獲勝(2人:7枚 / 3人:5枚 / 4人:4枚)。每回合先抽一張牌,手上會有兩張,選一張出牌並執行效果,留下另一張。</p>
+      ${items}
+      <div class="btn full mt14" onclick="toggleRules()">關閉</div>
+    </div>
+  </div>`;
+}
+
+/* ---------------- Init ---------------- */
+async function init(){
+  if(!FIREBASE_READY){
+    render();
+    return;
+  }
+  try{
+    const sess=localStorage.getItem('loveletter_session');
+    if(sess){
+      const data=JSON.parse(sess);
+      try{
+        const snap=await db.ref('rooms/'+data.roomCode).get();
+        if(snap.exists()){
+          const ns=snap.val();
+          if(ns.players.find(p=>p.id===data.myId)){
+            roomCode=data.roomCode; myId=data.myId; myName=data.myName;
+            state=ns; render(); subscribeRoom(data.roomCode); return;
+          }
+        }
+      }catch(e){}
+    }
+  }catch(e){}
+  try{
+    const n=localStorage.getItem('loveletter_name');
+    if(n) myName=n;
+  }catch(e){}
+  render();
+}
+init();
 </script>
 </body>
 </html>
