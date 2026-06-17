@@ -214,6 +214,15 @@
   .rule-item{margin-bottom:12px;border-bottom:1px solid rgba(0,0,0,0.1);padding-bottom:8px;}
   .rule-item b{color:var(--gold-deep);}
   .top-link{position:fixed;top:10px;right:14px;font-size:12px;color:var(--parchment-dark);cursor:pointer;text-decoration:underline;z-index:30;}
+  .emote-toast{
+    position:fixed;top:54px;left:50%;transform:translateX(-50%);
+    background:linear-gradient(180deg, var(--gold-light), var(--gold-deep));
+    color:#2c1c00;padding:8px 16px;border-radius:20px;font-size:14px;font-weight:700;
+    box-shadow:0 4px 14px rgba(0,0,0,0.4);z-index:60;
+    display:flex;align-items:center;gap:6px;
+    animation:emotePop .25s ease;white-space:nowrap;
+  }
+  @keyframes emotePop{from{transform:translateX(-50%) scale(0.6);opacity:0;}to{transform:translateX(-50%) scale(1);opacity:1;}}
 
   .champion-banner{
     text-align:center;font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--gold-light);
@@ -457,6 +466,20 @@ async function doJoinRoom(){
   try{ localStorage.setItem('loveletter_name', name); }catch(e){}
 }
 const BOT_NAMES=['電腦對手・甲','電腦對手・乙','電腦對手・丙'];
+const EMOTES=['😏','😂','😈','👀','🔥','😱','🤡','💪'];
+async function sendEmote(emoji){
+  if(!state || !myId) return;
+  const ns=clone(state);
+  ns.lastEmote={playerId:myId, emoji, nonce:Math.random().toString(36).slice(2)+Date.now()};
+  await saveState(ns);
+}
+function renderEmoteBar(){
+  return `<div class="panel"><h2>嗆人一下</h2>
+    <div class="btn-row" style="flex-wrap:wrap;">
+      ${EMOTES.map(e=>`<div class="pill" style="font-size:20px;padding:7px 12px;" onclick="sendEmote('${e}')">${e}</div>`).join('')}
+    </div>
+  </div>`;
+}
 async function doAddBot(){
   if(!state || state.players.length>=4) return;
   const ns=clone(state);
@@ -537,6 +560,20 @@ function checkBaronReveal(){
   const oppVal=meIsA?r.bVal:r.aVal;
   const opp=findP(meIsA?r.bId:r.aId);
   showNotice(`你的手牌是「${cardRoman(myVal)} ${cardName(myVal)}」,${opp?opp.name:'對方'} 的手牌是「${cardRoman(oppVal)} ${cardName(oppVal)}」。`, '男爵 · 比較手牌');
+}
+let lastSeenEmoteNonce=null;
+let emoteToast=null;
+let emoteToastTimer=null;
+function checkEmote(){
+  if(!state || !state.lastEmote) return;
+  const e=state.lastEmote;
+  if(e.nonce===lastSeenEmoteNonce) return;
+  lastSeenEmoteNonce=e.nonce;
+  const p=findP(e.playerId);
+  emoteToast={name:p?p.name:'?', emoji:e.emoji};
+  clearTimeout(emoteToastTimer);
+  emoteToastTimer=setTimeout(()=>{ emoteToast=null; render(); }, 2500);
+  render();
 }
 setInterval(()=>{ if(state && state.status==='countdown') render(); }, 350);
 
@@ -865,6 +902,7 @@ function render(){
   if(rulesOpen) html+=renderRulesModal();
   if(roomMenuOpen) html+=renderRoomMenu();
   if(notice) html+=renderNoticeModal();
+  if(emoteToast) html+=`<div class="emote-toast">${escapeHtml(emoteToast.name)} <span style="font-size:20px;">${emoteToast.emoji}</span></div>`;
   app.innerHTML=html;
 
   const ni=document.getElementById('nameInput');
@@ -875,6 +913,7 @@ function render(){
   maybeRunBot();
   checkCountdownFinish();
   checkBaronReveal();
+  checkEmote();
 }
 
 function renderCountdown(){
@@ -1025,6 +1064,7 @@ function renderPlaying(){
     </div>`;
   }
 
+  html+=renderEmoteBar();
   html+=renderDiscards();
   html+=renderLog();
   return html;
@@ -1103,6 +1143,7 @@ function renderRoundEnd(){
   html+=`<div class="panel center-text">
     ${isHost?`<div class="btn full" onclick="doNextRound()">下一輪</div>`:`<div class="hint">等待房主開始下一輪…</div>`}
   </div>`;
+  html+=renderEmoteBar();
   html+=renderLog();
   return html;
 }
@@ -1119,6 +1160,7 @@ function renderGameOver(){
     html+=`<div class="player-row"><span>${escapeHtml(p.name)}</span><span class="tokens">${dots}</span></div>`;
   });
   html+=`</div>`;
+  html+=renderEmoteBar();
   html+=`<div class="panel center-text">
     ${isHost?`<div class="btn full" onclick="doPlayAgain()">重新開始</div>`:`<div class="hint">等待房主重新開始…</div>`}
     <div class="mt8"><span class="btn secondary" onclick="doLeaveRoom()">離開房間</span></div>
