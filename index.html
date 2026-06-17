@@ -224,6 +224,41 @@
   }
   @keyframes emotePop{from{transform:translateX(-50%) scale(0.6);opacity:0;}to{transform:translateX(-50%) scale(1);opacity:1;}}
 
+  .eliminate-toast{
+    position:fixed;top:96px;left:50%;transform:translateX(-50%);
+    background:linear-gradient(180deg, #9c2c2c, var(--danger));
+    color:var(--parchment);padding:10px 20px;border-radius:10px;font-size:15px;font-weight:700;
+    box-shadow:0 6px 18px rgba(0,0,0,0.5);z-index:60;letter-spacing:1px;
+    border:1px solid rgba(255,255,255,0.25);
+    animation:stampSlam .35s cubic-bezier(.2,1.4,.4,1);white-space:nowrap;
+  }
+  @keyframes stampSlam{
+    0%{transform:translateX(-50%) scale(2.2) rotate(-8deg);opacity:0;}
+    60%{transform:translateX(-50%) scale(0.95) rotate(2deg);opacity:1;}
+    100%{transform:translateX(-50%) scale(1) rotate(0deg);opacity:1;}
+  }
+  @keyframes turnPulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(201,164,80,0.0);}
+    50%{box-shadow:0 0 0 5px rgba(201,164,80,0.28);}
+  }
+  .player-row.active{animation:turnPulse 1.8s ease-in-out infinite;}
+  .seal.pulse{animation:sealPulse 1.6s ease-in-out infinite;}
+  @keyframes sealPulse{
+    0%,100%{box-shadow:0 8px 16px rgba(0,0,0,0.5), inset 0 -6px 12px rgba(0,0,0,0.3), inset 0 5px 9px rgba(255,255,255,0.3), 0 0 0 0 rgba(232,205,126,0.5);}
+    50%{box-shadow:0 8px 16px rgba(0,0,0,0.5), inset 0 -6px 12px rgba(0,0,0,0.3), inset 0 5px 9px rgba(255,255,255,0.3), 0 0 0 10px rgba(232,205,126,0);}
+  }
+  .highlight-banner div.fresh{animation:freshPunch .4s ease;}
+  @keyframes freshPunch{
+    0%{transform:scale(1.06);background:rgba(201,164,80,0.35);}
+    100%{transform:scale(1);background:transparent;}
+  }
+  .banner-pop{animation:bannerPop .45s cubic-bezier(.2,1.5,.4,1);}
+  @keyframes bannerPop{
+    0%{transform:scale(0.7);opacity:0;}
+    70%{transform:scale(1.05);opacity:1;}
+    100%{transform:scale(1);opacity:1;}
+  }
+
   .champion-banner{
     text-align:center;font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--gold-light);
     padding:14px 0;text-shadow:0 2px 12px rgba(232,205,126,0.4);
@@ -432,7 +467,9 @@ function startRound(st){
 
 /* ---------------- Storage helpers (Firebase Realtime Database) ---------------- */
 let roomRef=null;
-function applySoundEffects(oldS, newS){
+let eliminateToast=null;
+let eliminateToastTimer=null;
+function applyEventEffects(oldS, newS){
   if(!newS) return;
   if(newS.status==='playing' && newS.currentPlayerId===myId && (!oldS || oldS.currentPlayerId!==myId)){
     sfxYourTurn();
@@ -445,7 +482,12 @@ function applySoundEffects(oldS, newS){
   if(oldS && oldS.players){
     newS.players.forEach(p=>{
       const old=oldS.players.find(o=>o.id===p.id);
-      if(old && old.alive && !p.alive) sfxEliminate();
+      if(old && old.alive && !p.alive){
+        sfxEliminate();
+        eliminateToast={name:p.name};
+        clearTimeout(eliminateToastTimer);
+        eliminateToastTimer=setTimeout(()=>{ eliminateToast=null; render(); }, 2200);
+      }
     });
   }
   if(voiceEnabled && oldS && newS.log && newS.log.length>oldS.log.length){
@@ -453,7 +495,7 @@ function applySoundEffects(oldS, newS){
   }
 }
 async function saveState(ns){
-  applySoundEffects(state, ns);
+  applyEventEffects(state, ns);
   state=ns;
   render();
   try{
@@ -488,7 +530,7 @@ function subscribeRoom(code){
     const ns=normalizeState(snap.val());
     if(!ns) return;
     if(JSON.stringify(ns)!==JSON.stringify(state)){
-      applySoundEffects(state, ns);
+      applyEventEffects(state, ns);
       if(state && ns.currentPlayerId!==state.currentPlayerId) localUI={stage:null,selectedCard:null,targetId:null,guess:null};
       state=ns;
       render();
@@ -1009,6 +1051,7 @@ function render(){
   if(settingsOpen) html+=renderSettingsModal();
   if(notice) html+=renderNoticeModal();
   if(emoteToast) html+=`<div class="emote-toast">${escapeHtml(emoteToast.name)} <span style="font-size:20px;">${emoteToast.emoji}</span></div>`;
+  if(eliminateToast) html+=`<div class="eliminate-toast">⚜ ${escapeHtml(eliminateToast.name)} 出局了 ⚜</div>`;
   app.innerHTML=html;
 
   const ni=document.getElementById('nameInput');
@@ -1124,8 +1167,11 @@ function renderLog(){
   return `<div class="panel"><h2>信箋紀事</h2><div class="log-box">${items}</div></div>`;
 }
 
+let lastRenderedLogLen=0;
 function renderHighlight(){
   if(!state.log || state.log.length===0) return '';
+  const isFresh = state.log.length>lastRenderedLogLen;
+  lastRenderedLogLen = state.log.length;
   const recent=state.log.slice(-4).reverse(); // newest first
   const opacities=[1, 0.8, 0.6, 0.42];
   const rows=recent.map((l,i)=>{
@@ -1133,7 +1179,8 @@ function renderHighlight(){
     const size=i===0?'15px':'13px';
     const top=i===0?'0':'7px';
     const border=i===0?'':'border-top:1px dashed rgba(201,164,80,0.18);padding-top:6px;';
-    return `<div style="opacity:${op};font-size:${size};margin-top:${top};${border}">${escapeHtml(l)}</div>`;
+    const freshClass=(i===0 && isFresh)?' fresh':'';
+    return `<div class="${freshClass.trim()}" style="opacity:${op};font-size:${size};margin-top:${top};${border}">${escapeHtml(l)}</div>`;
   }).join('');
   return `<div class="highlight-banner">
     <div class="eyebrow">最新動態</div>
@@ -1184,7 +1231,7 @@ function renderMyTurn(me){
   if(!localUI.stage){
     return `<div class="panel center-text">
       <div>輪到你了。</div>
-      <div class="seal-wrap"><div class="seal" onclick="doDraw()"><span>抽牌</span><small>DRAW</small></div></div>
+      <div class="seal-wrap"><div class="seal pulse" onclick="doDraw()"><span>抽牌</span><small>DRAW</small></div></div>
     </div>`;
   }
   const th=tempHand();
@@ -1240,7 +1287,7 @@ function renderMyTurn(me){
 function renderRoundEnd(){
   const winners=state.roundWinners.map(id=>findP(id)).filter(Boolean);
   const isHost=state.hostId===myId;
-  let html=`<div class="panel center-text">
+  let html=`<div class="panel center-text banner-pop">
     <h2 style="border:none;">本輪結算</h2>
     <div style="color:var(--gold-light);font-size:18px;margin-bottom:8px;">${winners.map(w=>escapeHtml(w.name)).join('、')} 獲得一枚信物</div>
   </div>`;
@@ -1261,7 +1308,7 @@ function renderRoundEnd(){
 function renderGameOver(){
   const champs=state.championIds.map(id=>findP(id)).filter(Boolean);
   const isHost=state.hostId===myId;
-  let html=`<div class="panel">
+  let html=`<div class="panel banner-pop">
     <div class="champion-banner">${champs.map(c=>escapeHtml(c.name)).join('、')} 贏得了這場賭局</div>
   </div>`;
   html+=`<div class="panel"><h2>最終信物數</h2>`;
