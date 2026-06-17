@@ -237,6 +237,7 @@
 <body>
 <div class="top-link" onclick="toggleRules()">規則 ‣</div>
 <div class="top-link" id="leaveLink" style="left:14px;right:auto;display:none;" onclick="toggleRoomMenu()">‣ 房間選項</div>
+<div class="top-link" style="left:14px;right:auto;top:34px;" onclick="toggleSettings()">‣ 音效設定</div>
 <div id="app"></div>
 
 <script>
@@ -261,6 +262,85 @@ if(FIREBASE_READY){
   firebase.initializeApp(FIREBASE_CONFIG);
   db=firebase.database();
 }
+
+/* ---------------- Sound & voice ---------------- */
+let soundEnabled=true, voiceEnabled=false;
+try{ soundEnabled = localStorage.getItem('loveletter_sound')!=='off'; }catch(e){}
+try{ voiceEnabled = localStorage.getItem('loveletter_voice')==='on'; }catch(e){}
+let audioCtx=null;
+function getAudioCtx(){
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; }
+  }
+  return audioCtx;
+}
+function beep(freq, duration, type, delay, volume){
+  if(!soundEnabled) return;
+  const ctx=getAudioCtx();
+  if(!ctx) return;
+  try{
+    const t0=ctx.currentTime+(delay||0);
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.type=type||'sine';
+    osc.frequency.setValueAtTime(freq, t0);
+    gain.gain.setValueAtTime(0, t0);
+    gain.gain.linearRampToValueAtTime(volume!=null?volume:0.12, t0+0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0+(duration||0.1));
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(t0); osc.stop(t0+(duration||0.1)+0.02);
+  }catch(e){}
+}
+function sfxDraw(){ beep(520,0.07,'sine'); }
+function sfxPlay(){ beep(360,0.09,'triangle'); beep(500,0.09,'triangle',0.07); }
+function sfxEliminate(){ beep(320,0.14,'sawtooth'); beep(190,0.22,'sawtooth',0.12); }
+function sfxYourTurn(){ beep(660,0.09,'sine'); beep(880,0.12,'sine',0.11); }
+function sfxEmote(){ beep(720,0.06,'square'); beep(920,0.07,'square',0.06); }
+function sfxRoundEnd(){ beep(523,0.1,'sine'); beep(659,0.14,'sine',0.1); }
+function sfxWin(){ beep(523,0.12,'sine'); beep(659,0.12,'sine',0.12); beep(784,0.2,'sine',0.24); }
+function sfxTick(){ beep(440,0.06,'sine'); }
+function sfxGo(){ beep(880,0.22,'sine'); }
+function speak(text){
+  if(!voiceEnabled) return;
+  try{
+    if(!('speechSynthesis' in window)) return;
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='zh-TW'; u.rate=1.05;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function toggleSound(){
+  soundEnabled=!soundEnabled;
+  try{ localStorage.setItem('loveletter_sound', soundEnabled?'on':'off'); }catch(e){}
+  if(soundEnabled) beep(660,0.08,'sine');
+  render();
+}
+function toggleVoice(){
+  voiceEnabled=!voiceEnabled;
+  try{ localStorage.setItem('loveletter_voice', voiceEnabled?'on':'off'); }catch(e){}
+  if(voiceEnabled) speak('語音播報已開啟');
+  render();
+}
+let settingsOpen=false;
+function toggleSettings(){ settingsOpen=!settingsOpen; render(); }
+function renderSettingsModal(){
+  return `<div class="modal-overlay" onclick="if(event.target===this) toggleSettings()">
+    <div class="modal-box">
+      <h3>音效與語音</h3>
+      <div class="player-row" style="background:rgba(0,0,0,0.05);color:var(--ink);">
+        <span>音效</span>
+        <span class="btn secondary" style="padding:5px 14px;" onclick="toggleSound()">${soundEnabled?'開':'關'}</span>
+      </div>
+      <div class="player-row" style="background:rgba(0,0,0,0.05);color:var(--ink);margin-top:8px;">
+        <span>語音播報最新動態</span>
+        <span class="btn secondary" style="padding:5px 14px;" onclick="toggleVoice()">${voiceEnabled?'開':'關'}</span>
+      </div>
+      <p class="hint" style="margin-top:10px;">語音播報是用瀏覽器內建的文字轉語音朗讀,音色跟支援度依手機/瀏覽器而不同。</p>
+      <div class="btn full mt14" onclick="toggleSettings()">關閉</div>
+    </div>
+  </div>`;
+}
+let lastCountdownTick=null;
 
 /* ---------------- Card definitions ---------------- */
 const CARDS = {
@@ -352,7 +432,28 @@ function startRound(st){
 
 /* ---------------- Storage helpers (Firebase Realtime Database) ---------------- */
 let roomRef=null;
+function applySoundEffects(oldS, newS){
+  if(!newS) return;
+  if(newS.status==='playing' && newS.currentPlayerId===myId && (!oldS || oldS.currentPlayerId!==myId)){
+    sfxYourTurn();
+    speak('輪到你了');
+  }
+  if(oldS && oldS.status!==newS.status){
+    if(newS.status==='roundEnd') sfxRoundEnd();
+    if(newS.status==='gameOver') sfxWin();
+  }
+  if(oldS && oldS.players){
+    newS.players.forEach(p=>{
+      const old=oldS.players.find(o=>o.id===p.id);
+      if(old && old.alive && !p.alive) sfxEliminate();
+    });
+  }
+  if(voiceEnabled && oldS && newS.log && newS.log.length>oldS.log.length){
+    speak(newS.log[newS.log.length-1]);
+  }
+}
 async function saveState(ns){
+  applySoundEffects(state, ns);
   state=ns;
   render();
   try{
@@ -387,6 +488,7 @@ function subscribeRoom(code){
     const ns=normalizeState(snap.val());
     if(!ns) return;
     if(JSON.stringify(ns)!==JSON.stringify(state)){
+      applySoundEffects(state, ns);
       if(state && ns.currentPlayerId!==state.currentPlayerId) localUI={stage:null,selectedCard:null,targetId:null,guess:null};
       state=ns;
       render();
@@ -571,6 +673,7 @@ function checkEmote(){
   lastSeenEmoteNonce=e.nonce;
   const p=findP(e.playerId);
   emoteToast={name:p?p.name:'?', emoji:e.emoji};
+  sfxEmote();
   clearTimeout(emoteToastTimer);
   emoteToastTimer=setTimeout(()=>{ emoteToast=null; render(); }, 2500);
   render();
@@ -586,6 +689,7 @@ function doDraw(){
   const deck=[...state.deck];
   const drawn=deck.pop();
   localUI.stage={deck, drawnCard:drawn};
+  sfxDraw();
   render();
 }
 function tempHand(){
@@ -644,6 +748,7 @@ function confirmPlay(){
   resolveEffect(ns, me, card, localUI.targetId, localUI.guess, true);
   finalizeTurnOrRoundEnd(ns);
   localUI={stage:null,selectedCard:null,targetId:null,guess:null};
+  sfxPlay();
   saveState(ns);
 }
 
@@ -901,6 +1006,7 @@ function render(){
 
   if(rulesOpen) html+=renderRulesModal();
   if(roomMenuOpen) html+=renderRoomMenu();
+  if(settingsOpen) html+=renderSettingsModal();
   if(notice) html+=renderNoticeModal();
   if(emoteToast) html+=`<div class="emote-toast">${escapeHtml(emoteToast.name)} <span style="font-size:20px;">${emoteToast.emoji}</span></div>`;
   app.innerHTML=html;
@@ -918,6 +1024,10 @@ function render(){
 
 function renderCountdown(){
   const remaining=Math.max(0, Math.ceil((state.countdownEndAt-Date.now())/1000));
+  if(remaining!==lastCountdownTick){
+    lastCountdownTick=remaining;
+    if(remaining>0) sfxTick(); else sfxGo();
+  }
   return `<div class="panel center-text">
     <h2 style="border:none;">即將開始</h2>
     <div style="font-family:'Cormorant Garamond',serif;font-size:64px;color:var(--gold-light);margin:6px 0;">${remaining>0?remaining:'開始!'}</div>
