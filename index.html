@@ -153,6 +153,10 @@
   .card:hover{transform:translateY(-3px);}
   .card.selected{outline:3px solid var(--gold-light);transform:translateY(-4px);}
   .card.locked{cursor:not-allowed;opacity:0.5;}
+  .card-icon{width:100%;display:flex;justify-content:center;margin-bottom:6px;color:var(--wine);}
+  .card-icon svg{width:42px;height:42px;fill:none;stroke:currentColor;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round;}
+  .card-icon.small{width:auto;margin-bottom:0;}
+  .card-icon.small svg{width:26px;height:26px;stroke-width:2.8;}
   .card .roman{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:var(--gold-deep);}
   .card .cname{font-family:'Noto Serif TC',serif;font-weight:700;font-size:16px;margin:2px 0 4px;}
   .card .cdesc{font-size:12px;font-style:italic;color:var(--ink-soft);line-height:1.4;}
@@ -263,6 +267,18 @@ const CARDS = {
 function cardName(v){return CARDS[v]?CARDS[v].name:'?';}
 function cardRoman(v){return CARDS[v]?CARDS[v].roman:'?';}
 function cardDesc(v){return CARDS[v]?CARDS[v].desc:'';}
+
+const CARD_ICONS = {
+  1:'<svg viewBox="0 0 64 64"><path d="M32 6 L54 14 V30 C54 46 44 56 32 60 C20 56 10 46 10 30 V14 Z"/><path d="M32 18 V46 M22 26 H42"/></svg>',
+  2:'<svg viewBox="0 0 64 64"><path d="M8 32 C20 16 44 16 56 32 C44 48 20 48 8 32 Z"/><circle cx="32" cy="32" r="7"/><circle cx="32" cy="32" r="1.6" fill="currentColor" stroke="none"/></svg>',
+  3:'<svg viewBox="0 0 64 64"><path d="M12 12 L52 52 M12 52 L52 12"/><path d="M12 12 L19 12 M12 12 L12 19 M52 52 L45 52 M52 52 L52 45 M12 52 L19 52 M12 52 L12 45 M52 12 L45 12 M52 12 L52 19"/></svg>',
+  4:'<svg viewBox="0 0 64 64"><path d="M32 8 C46 8 54 22 52 38 C50 50 42 56 32 58 C22 56 14 50 12 38 C10 22 18 8 32 8 Z"/><path d="M21 30 C26 25 38 25 43 30"/></svg>',
+  5:'<svg viewBox="0 0 64 64"><path d="M10 42 L18 20 L32 36 L46 20 L54 42 Z"/><path d="M10 42 H54 V49 H10 Z"/><circle cx="32" cy="14" r="2.6" fill="currentColor" stroke="none"/></svg>',
+  6:'<svg viewBox="0 0 64 64"><path d="M8 44 L14 18 L24 34 L32 14 L40 34 L50 18 L56 44 Z"/><path d="M8 44 H56 V51 H8 Z"/><circle cx="32" cy="10" r="2.6" fill="currentColor" stroke="none"/><circle cx="14" cy="14" r="2" fill="currentColor" stroke="none"/><circle cx="50" cy="14" r="2" fill="currentColor" stroke="none"/></svg>',
+  7:'<svg viewBox="0 0 64 64"><path d="M32 56 L10 18 C20 10 44 10 54 18 Z"/><path d="M32 56 L18 22 M32 56 L25 16 M32 56 L32 13 M32 56 L39 16 M32 56 L46 22"/></svg>',
+  8:'<svg viewBox="0 0 64 64"><path d="M32 14 C40 14 46 22 44 30 C50 28 54 32 52 38 C56 38 58 44 54 48 C48 52 38 50 32 56 C26 50 16 52 10 48 C6 44 8 38 12 38 C10 32 14 28 20 30 C18 22 24 14 32 14 Z"/><circle cx="32" cy="34" r="4" fill="currentColor" stroke="none"/></svg>'
+};
+function cardIcon(v){ return CARD_ICONS[v] || ''; }
 
 /* ---------------- Global session ---------------- */
 let roomCode=null, myId=null, myName='';
@@ -509,6 +525,19 @@ function checkCountdownFinish(){
   saveState(ns);
   setTimeout(()=>{countdownLock=false;}, 1500);
 }
+let lastSeenRevealNonce=null;
+function checkBaronReveal(){
+  if(!state || !state.lastReveal) return;
+  const r=state.lastReveal;
+  if(r.nonce===lastSeenRevealNonce) return;
+  lastSeenRevealNonce=r.nonce;
+  if(myId!==r.aId && myId!==r.bId) return; // not one of the two players involved, no peek
+  const meIsA=myId===r.aId;
+  const myVal=meIsA?r.aVal:r.bVal;
+  const oppVal=meIsA?r.bVal:r.aVal;
+  const opp=findP(meIsA?r.bId:r.aId);
+  showNotice(`你的手牌是「${cardRoman(myVal)} ${cardName(myVal)}」,${opp?opp.name:'對方'} 的手牌是「${cardRoman(oppVal)} ${cardName(oppVal)}」。`, '男爵 · 比較手牌');
+}
 setInterval(()=>{ if(state && state.status==='countdown') render(); }, 350);
 
 /* ---------------- Turn actions ---------------- */
@@ -616,14 +645,15 @@ function resolveEffect(ns, actor, card, tId, guess, isHumanReveal){
       const t = tId!=null ? ns.players.find(p=>p.id===tId) : null;
       if(t){
         const myVal=actor.hand[0], tVal=t.hand[0];
+        ns.lastReveal={type:'baron', aId:actor.id, bId:t.id, aVal:myVal, bVal:tVal, nonce:Math.random().toString(36).slice(2)+Date.now()};
         if(myVal===tVal){
-          ns.log.push(`${actor.name} 與 ${t.name} 比較手牌,點數相同(「${cardName(myVal)}」),平手無事發生。`);
+          ns.log.push(`${actor.name} 與 ${t.name} 比較手牌,點數相同,平手無事發生。`);
         }else if(myVal>tVal){
           t.alive=false;
-          ns.log.push(`${actor.name}(「${cardName(myVal)}」)與 ${t.name}(「${cardName(tVal)}」)比較手牌,${t.name} 出局。`);
+          ns.log.push(`${actor.name} 與 ${t.name} 比較手牌,${t.name} 出局。`);
         }else{
           actor.alive=false;
-          ns.log.push(`${actor.name}(「${cardName(myVal)}」)與 ${t.name}(「${cardName(tVal)}」)比較手牌,${actor.name} 出局。`);
+          ns.log.push(`${actor.name} 與 ${t.name} 比較手牌,${actor.name} 出局。`);
         }
       }else{
         ns.log.push('沒有可指定的目標,男爵效果無效。');
@@ -844,6 +874,7 @@ function render(){
 
   maybeRunBot();
   checkCountdownFinish();
+  checkBaronReveal();
 }
 
 function renderCountdown(){
@@ -985,6 +1016,7 @@ function renderPlaying(){
     html+=`<div class="panel"><h2>你的手牌</h2>
       <div class="cards-row">
         <div class="card">
+          <div class="card-icon">${cardIcon(me.hand[0])}</div>
           <div class="roman display">${cardRoman(me.hand[0])}</div>
           <div class="cname">${cardName(me.hand[0])}</div>
           <div class="cdesc">${cardDesc(me.hand[0])}</div>
@@ -1013,6 +1045,7 @@ function renderMyTurn(me){
     const locked=forcedCountess() && v!==7;
     const sel=localUI.selectedCard===v?' selected':'';
     html+=`<div class="card${sel}${locked?' locked':''}" onclick="${locked?'':'selectCard('+v+')'}">
+      <div class="card-icon">${cardIcon(v)}</div>
       <div class="roman display">${cardRoman(v)}</div>
       <div class="cname">${cardName(v)}</div>
       <div class="cdesc">${cardDesc(v)}</div>
@@ -1109,7 +1142,10 @@ function renderRoomMenu(){
 function renderRulesModal(){
   let items='';
   for(let v=1;v<=8;v++){
-    items+=`<div class="rule-item"><b>${cardRoman(v)} ${cardName(v)}</b>（${CARDS[v].count} 張）<br>${cardDesc(v)}</div>`;
+    items+=`<div class="rule-item" style="display:flex;gap:10px;align-items:flex-start;">
+      <div class="card-icon small" style="flex:none;margin:2px 0 0;">${cardIcon(v)}</div>
+      <div><b>${cardRoman(v)} ${cardName(v)}</b>(${CARDS[v].count} 張)<br>${cardDesc(v)}</div>
+    </div>`;
   }
   return `<div class="modal-overlay" onclick="if(event.target===this) toggleRules()">
     <div class="modal-box">
